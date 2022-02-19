@@ -1,4 +1,5 @@
 import argparse
+from typing import Optional
 
 from ocma import connect
 
@@ -12,7 +13,7 @@ def run() -> None:
         "--username",
         metavar="username",
         type=str,
-        help="MS Account username",
+        help="MS Account username.",
         required=True,
     )
     parser.add_argument(
@@ -20,15 +21,14 @@ def run() -> None:
         "--password",
         metavar="password",
         type=str,
-        help="MS Account password",
-        required=True,
+        help="MS Account password. If not provided, it will be read from stdin.",
     )
     parser.add_argument(
         "-m",
         "--mfa",
         metavar="secret",
         type=str,
-        help="TOTP secret. Required, if you have set up 2FA with your MS account (only TOTP)",
+        help="TOTP secret. Required, if you have set up 2FA with your MS account (only TOTP).",
         required=False,
     )
 
@@ -43,7 +43,7 @@ def run() -> None:
     parser.add_argument(
         "--show-head",
         action="store_false",
-        help="If the browser window should be shown during the authentication process",
+        help="If the browser window should be shown during the authentication process.",
     )
 
     parser.add_argument(
@@ -60,14 +60,14 @@ def run() -> None:
     args = parser.parse_args()
 
     username: str = args.username
-    password: str = args.password
+    password: Optional[str] = args.password
     mfa_secret: str = args.mfa
     vpn_url: str = args.vpn_url
     headless: bool = args.show_head
     print_to_stdout: bool = args.print_to_stdout
 
-    if username is None or password is None:
-        raise ValueError("Username and password must be specified!")
+    if password is None:
+        password = input()
 
     if mfa_secret is not None:
         try:
