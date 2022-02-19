@@ -1,0 +1,80 @@
+kind: pipeline
+name: default
+
+steps:
+  - name: unit-test
+    image: python:3.9.9-slim
+    commands:
+      - pip install poetry
+      - poetry install
+      - poetry run pytest ./tests/
+    volumes:
+      - name: cache-pip
+        path: /root/.cache/pip
+      - name: cache-poetry
+        path: /root/.cache/pypoetry
+
+  - name: build-only
+    image: plugins/docker
+    settings:
+      repo: docker.snas.black-burn.ch/${DRONE_REPO_NAMESPACE,,}/${DRONE_REPO_NAME,,}
+      dry_run: true
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+    when:
+      ref:
+        exclude:
+          - refs/tags/*
+
+  - name: build-and-push
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: NUCNAS_DOCKER_USERNAME
+      password:
+        from_secret: NUCNAS_DOCKER_PASSWORD
+      repo: docker.snas.black-burn.ch/${DRONE_REPO_NAMESPACE,,}/${DRONE_REPO_NAME,,}
+      registry: docker.snas.black-burn.ch
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+    when:
+      ref:
+        - refs/tags/*
+
+  - name: discord notification
+    image: appleboy/drone-discord
+    when:
+      status:
+        - failure
+        - success
+    settings:
+      username: drone-ci
+      webhook_id:
+        from_secret: DISCORD_WEBHOOK_ID
+      webhook_token:
+        from_secret: DISCORD_WEBHOOK_TOKEN
+      message: >
+        {{#success build.status}}
+          :green_square: {{repo.name}} #{{build.number}}
+          {{commit.branch}} / {{truncate commit.sha 8}} / {{commit.author}}
+          Build succeeded!
+        {{else}}
+          :red_square: {{repo.name}} #{{build.number}}
+          {{commit.branch}} / {{truncate commit.sha 8}} / {{commit.author}}
+          Build failed!
+        {{/success}}
+
+volumes:
+  - name: docker_sock
+    host:
+      path: /var/run/docker.sock
+
+  - name: cache-pip
+    host:
+      path: /tmp/drone/cache/pip
+
+  - name: cache-poetry
+    host:
+      path: /tmp/drone/cache/poetry
