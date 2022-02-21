@@ -8,7 +8,7 @@ fetches the correct VPN HOST and the Cisco AnyConnect `webvpn` cookie.
 
 ## Installation for CLI usage
 
-Simply run `pip install git+https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth` to
+Simply run `pip install --upgrade git+https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth` to
 install the package globally. Then the "ocma" command should be available. Try it out by
 typing `ocma -h`.
 
