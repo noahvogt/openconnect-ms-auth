@@ -30,15 +30,6 @@ DOMAIN_CHECK_DELAY = 0.5
 LOGGER = logging.getLogger("OCMA")
 LOGGER.setLevel(logging.INFO)
 
-fh = logging.FileHandler("ocma.log")
-fh.setLevel(logging.DEBUG)
-
-fh_s = logging.StreamHandler()
-fh_s.setLevel(logging.DEBUG)
-
-LOGGER.addHandler(fh)
-LOGGER.addHandler(fh_s)
-
 
 @dataclass
 class VPNCookie:
@@ -52,7 +43,17 @@ def login(
     mfa_secret: Optional[str] = None,
     vpn_site: str = "https://vpn.fhnw.ch",
     headless: bool = True,
+    log_messages: bool = False,
 ) -> VPNCookie:
+    if log_messages:
+        formatter = logging.Formatter(
+            "%(asctime)s: %(levelname)s - %(name)s - %(message)s"
+        )
+        fh_s = logging.StreamHandler()
+        fh_s.setLevel(logging.INFO)
+        fh_s.setFormatter(formatter)
+        LOGGER.addHandler(fh_s)
+
     LOGGER.info("Starting")
 
     options = FirefoxOptions()

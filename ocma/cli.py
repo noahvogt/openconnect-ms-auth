@@ -45,6 +45,11 @@ def run() -> None:
         action="store_false",
         help="If the browser window should be shown during the authentication process.",
     )
+    parser.add_argument(
+        "-v",
+        action="store_true",
+        help="If verbal messages should be printed to stderr",
+    )
 
     parser.add_argument(
         "--print-to-stdout",
@@ -65,6 +70,7 @@ def run() -> None:
     vpn_url: str = args.vpn_url
     headless: bool = args.show_head
     print_to_stdout: bool = args.print_to_stdout
+    log_messages: bool = args.v
 
     if password is None:
         password = input()
@@ -82,6 +88,7 @@ def run() -> None:
         mfa_secret=mfa_secret,
         vpn_site=vpn_url,
         headless=headless,
+        log_messages=log_messages,
     )
 
     if print_to_stdout:
