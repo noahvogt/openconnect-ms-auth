@@ -33,7 +33,7 @@ def run() -> None:
     )
 
     parser.add_argument(
-        "--vpn_url",
+        "--vpn-url",
         nargs="?",
         metavar="url",
         type=str,
