@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from otppy import OTP
 from selenium import webdriver
 from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.common.exceptions import ElementNotInteractableException
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import TimeoutException
@@ -89,10 +90,15 @@ def _fill_login(driver: webdriver.Firefox, username: str, password: str) -> None
     if not _find_element(driver, By.NAME, USERNAME_INPUT_NAME):
         raise ValueError("Could not find login page!")
 
+    if not _element_interactable(driver, By.NAME, USERNAME_INPUT_NAME):
+        raise ValueError("Could not find username field!")
     driver.find_element(By.NAME, USERNAME_INPUT_NAME).send_keys(username)
+    click_continue(driver)
+
+    if not _element_interactable(driver, By.NAME, PASSWORD_INPUT_NAME):
+        raise ValueError("Could not find password input!")
     driver.find_element(By.NAME, PASSWORD_INPUT_NAME).send_keys(password)
-    click_continue(driver)  # Confirm username
-    click_continue(driver)  # Confirm password
+    click_continue(driver)
 
     on_login_form = lambda: "saml2" in driver.current_url
 
@@ -179,6 +185,18 @@ def _find_element(driver: webdriver.Firefox, by: str, item: str, wait: int = 8) 
         return True
 
     except TimeoutException:
+        return False
+
+
+def _element_interactable(
+    driver: webdriver.Firefox, by: str, item: str, wait: int = 8
+) -> bool:
+    try:
+        w = WebDriverWait(driver, wait)
+        w.until(EC.element_to_be_clickable((by, item)))
+        return True
+
+    except ElementNotInteractableException:
         return False
 
 
