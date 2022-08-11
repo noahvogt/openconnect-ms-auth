@@ -1,4 +1,5 @@
 kind: pipeline
+type: docker
 name: default
 
 steps:
@@ -17,7 +18,7 @@ steps:
   - name: build-only
     image: plugins/docker
     settings:
-      repo: docker.snas.black-burn.ch/${DRONE_REPO_NAMESPACE,,}/${DRONE_REPO_NAME,,}
+      repo: drone-ci/${DRONE_REPO_NAMESPACE,,}/${DRONE_REPO_NAME,,}
       dry_run: true
     volumes:
       - name: docker_sock
