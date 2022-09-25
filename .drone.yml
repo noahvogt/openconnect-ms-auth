@@ -3,17 +3,22 @@ type: docker
 name: default
 
 steps:
-  - name: unit-test
-    image: python:3.9.9-slim
-    commands:
-      - pip install poetry
-      - poetry install
-      - poetry run pytest ./tests/
+  - name: test
+    image: python:3.9
     volumes:
-      - name: cache-pip
-        path: /root/.cache/pip
-      - name: cache-poetry
-        path: /root/.cache/pypoetry
+      - name: poetry_cache
+        path: /root/.cache/pypoetry/virtualenvs
+      - name: pip_cache
+        path: /root/.cache/pip/
+      - name: poetry_bin
+        path: /root/.local/bin
+      - name: pre_commit_environments
+        path: /root/.cache/pre-commit
+    commands:
+      - curl -sSL https://install.python-poetry.org | python3 -
+      - export PATH="/root/.local/bin:$PATH"
+      - poetry install
+      - poetry run pre-commit run -a
 
   - name: build-only
     image: plugins/docker
@@ -68,14 +73,15 @@ steps:
         {{/success}}
 
 volumes:
-  - name: docker_sock
-    host:
-      path: /var/run/docker.sock
-
-  - name: cache-pip
+  - name: pip_cache
     host:
       path: /tmp/drone/cache/pip
-
-  - name: cache-poetry
+  - name: poetry_cache
     host:
       path: /tmp/drone/cache/poetry
+  - name: poetry_bin
+    host:
+      path: /tmp/drone/cache/poetry_bin
+  - name: pre_commit_environments
+    host:
+      path: /tmp/drone/cache/pre_commit_environments
