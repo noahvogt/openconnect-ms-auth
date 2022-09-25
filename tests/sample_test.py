@@ -1,2 +1,5 @@
+"""Openconnect MS auth tests."""
+
+
 def test_sample() -> None:
-    pass
+    """Just a sample test."""

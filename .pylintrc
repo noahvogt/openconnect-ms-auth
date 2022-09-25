@@ -1,0 +1,10 @@
+[MASTER]
+
+[MESSAGES CONTROL]
+disable=import-error,too-many-arguments
+
+[FORMAT]
+max-line-length=150
+
+[BASIC]
+good-names=w, by, i, e

@@ -1,3 +1,5 @@
+"""Openconnect-Microsoft-login connection helpers."""
+
 import logging
 import time
 from dataclasses import dataclass
@@ -34,6 +36,8 @@ LOGGER.setLevel(logging.INFO)
 
 @dataclass
 class VPNCookie:
+    """VPN cookie data container."""
+
     domain: str
     cookie: str
 
@@ -46,6 +50,34 @@ def login(
     headless: bool = True,
     log_messages: bool = False,
 ) -> VPNCookie:
+    """
+    Log in to the vpn.
+
+    Parameters
+    ----------
+    username : str
+        Microsoft account username.
+    password : str
+        Microsoft account password.
+    mfa_secret : Optional[str], optional
+        Multifactor secret, by default None
+    vpn_site : _type_, optional
+        VPN site to log into, by default "https://vpn.fhnw.ch"
+    headless : bool, optional
+        If the browser should be run in headless mode, by default True
+    log_messages : bool, optional
+        If messages should be logged to the console, by default False
+
+    Returns
+    -------
+    VPNCookie
+        Cookie to log into the openconnect VPN.
+
+    Raises
+    ------
+    ValueError
+        If anything went sideways during the login.
+    """
     if log_messages:
         formatter = logging.Formatter(
             "%(asctime)s: %(levelname)s - %(name)s - %(message)s"
@@ -100,16 +132,16 @@ def _fill_login(driver: webdriver.Firefox, username: str, password: str) -> None
     driver.find_element(By.NAME, PASSWORD_INPUT_NAME).send_keys(password)
     click_continue(driver)
 
-    on_login_form = lambda: "saml2" in driver.current_url
-
     retries = MAX_RETRY_DOMAIN_CHECK
-    while on_login_form() and retries > 0:
+    while on_login_form(driver) and retries > 0:
         LOGGER.info(
-            f"Login information may not have yet been confirmed. Checking again (Try {MAX_RETRY_DOMAIN_CHECK - retries + 1} of {MAX_RETRY_DOMAIN_CHECK})"
+            "Login information may not have yet been confirmed. Checking again (Try %s of %s)",
+            MAX_RETRY_DOMAIN_CHECK - retries + 1,
+            MAX_RETRY_DOMAIN_CHECK,
         )
         time.sleep(ELEMENT_CHECK_DELAY)
 
-        if on_login_form():
+        if on_login_form(driver):
             LOGGER.info("Login information has not yet been confirmed. Trying again")
             click_continue(driver)  # Confirm password
         retries -= 1
@@ -118,6 +150,23 @@ def _fill_login(driver: webdriver.Firefox, username: str, password: str) -> None
         raise ValueError("Failed to confirm login form!")
 
     LOGGER.info("Login information filled out")
+
+
+def on_login_form(driver: webdriver.Firefox) -> bool:
+    """
+    Check if we are on the login form.
+
+    Parameters
+    ----------
+    driver : webdriver.Firefox
+        The web driver to check on.
+
+    Returns
+    -------
+    bool
+        True if we are on the login form, else false.
+    """
+    return "saml2" in driver.current_url
 
 
 def _fill_mfa(driver: webdriver.Firefox, mfa_secret: Optional[str]) -> None:
@@ -136,7 +185,7 @@ def _fill_mfa(driver: webdriver.Firefox, mfa_secret: Optional[str]) -> None:
 
     for i in range(MFA_MAX_RETRY_COUNT):
         LOGGER.info(
-            f"Filling in MFA information (Try {i + 1} of {MFA_MAX_RETRY_COUNT})"
+            "Filling in MFA information (Try %s of %s)", i + 1, MFA_MAX_RETRY_COUNT
         )
         if not _find_element(driver, By.NAME, MFA_INPUT_NAME):
             time.sleep(ELEMENT_CHECK_DELAY)
@@ -146,35 +195,35 @@ def _fill_mfa(driver: webdriver.Firefox, mfa_secret: Optional[str]) -> None:
         driver.find_element(By.NAME, MFA_INPUT_NAME).send_keys(mfa_code)
         click_continue(driver, MFA_CONTINUE_BUTTON_ID)  # Confirm otp
 
-        LOGGER.info(f"Confirmed MFA code")
+        LOGGER.info("Confirmed MFA code")
 
         if not driver.current_url.endswith("/login"):
             # We have moved on
-            LOGGER.info(f"We have moved away from the MFA page")
+            LOGGER.info("We have moved away from the MFA page")
             break
 
         # Check for any errors
         if not _find_element(driver, By.ID, MFA_ERROR_TEXT_ID, 2):
             # Did not find an error
-            LOGGER.info(f"MFA seems to have been accepted, no errors")
+            LOGGER.info("MFA seems to have been accepted, no errors")
             break
 
 
 def _confirm_stay_signed_in(driver: webdriver.Firefox) -> bool:
-    LOGGER.info(f"Cheking if we should confirm if we should stay signed in")
+    LOGGER.info("Cheking if we should confirm if we should stay signed in")
 
     if not _is_on_ms_login_page(driver):
-        LOGGER.info(f"Already logged in, can't confirm 'stay signed in'")
+        LOGGER.info("Already logged in, can't confirm 'stay signed in'")
         return False
 
     if not driver.current_url.endswith("/common/SAS/ProcessAuth"):
         LOGGER.info(
-            f"We have reached a dead end. We have completed the login, but not on the 'stay signed in' page"
+            "We have reached a dead end. We have completed the login, but not on the 'stay signed in' page"
         )
         return False
 
     click_continue(driver)  # Confirm stay signed in
-    LOGGER.info(f"Confirmed to 'stay signed in'")
+    LOGGER.info("Confirmed to 'stay signed in'")
     return True
 
 
@@ -229,7 +278,21 @@ def _is_on_ms_login_page(driver: webdriver.Firefox) -> bool:
 
 
 def click_continue(driver: webdriver.Firefox, btn_id: str = CONTINUE_BUTTON_ID) -> bool:
-    """Returns true if still on login page, false if not"""
+    """
+    Click the continue button.
+
+    Parameters
+    ----------
+    driver : webdriver.Firefox
+        The driver for which to click the continue button.
+    btn_id : str, optional
+        The buttons ID to be clicked, by default CONTINUE_BUTTON_ID
+
+    Returns
+    -------
+    bool
+        True if still on login page, false if not.
+    """
     for _ in range(16):
         try:
             driver.find_element(By.ID, btn_id).click()
@@ -245,6 +308,19 @@ def click_continue(driver: webdriver.Firefox, btn_id: str = CONTINUE_BUTTON_ID) 
 
 
 def get_mfa_code(secret: str) -> str:
+    """
+    Get the multifactor authentication code for the given secret.
+
+    Parameters
+    ----------
+    secret : str
+        MFA secret
+
+    Returns
+    -------
+    str
+        MFA code
+    """
     otp = OTP.fromb32(secret)
     code: str = otp.TOTP()[0]
     return code

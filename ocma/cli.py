@@ -1,3 +1,5 @@
+"""CLI interface."""
+
 import argparse
 from typing import Optional
 
@@ -5,6 +7,7 @@ from ocma import connect
 
 
 def run() -> None:
+    """Run the CLI interface."""
     parser = argparse.ArgumentParser(description="openconnect-microsoft-authenticator")
 
     # add argument
