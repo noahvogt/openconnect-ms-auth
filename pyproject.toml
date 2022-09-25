@@ -4,6 +4,10 @@ version = "0.1.4"
 description = ""
 authors = ["Sean Blackburn <birdicode@gmail.com>"]
 license = "MIT"
+packages = [
+  {include = "ocma"},
+  {include = "ocma/py.typed"},
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
