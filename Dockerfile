@@ -1,4 +1,4 @@
-FROM python:3.9.9-slim as Runner
+FROM python:3.10.7-slim as Runner
 
 # Env
 ENV IS_DOCKER=true

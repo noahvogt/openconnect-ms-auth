@@ -4,7 +4,7 @@ name: default
 
 steps:
   - name: test
-    image: python:3.9
+    image: python:3.10
     volumes:
       - name: poetry_cache
         path: /root/.cache/pypoetry/virtualenvs
