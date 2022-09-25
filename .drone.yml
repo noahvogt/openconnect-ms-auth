@@ -20,11 +20,15 @@ steps:
       - poetry install
       - poetry run pre-commit run -a
 
-  - name: build-only
+  - name: build-latest
     image: plugins/docker
     settings:
-      repo: drone-ci/${DRONE_REPO_NAMESPACE,,}/${DRONE_REPO_NAME,,}
-      dry_run: true
+      username:
+        from_secret: NUCNAS_GITEA_DOCKER_USERNAME
+      password:
+        from_secret: NUCNAS_GITEA_DOCKER_PASSWORD
+      repo: git.snas.black-burn.ch/${DRONE_REPO_NAMESPACE,,}/${DRONE_REPO_NAME,,}
+      registry: git.snas.black-burn.ch
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
@@ -32,22 +36,52 @@ steps:
       ref:
         exclude:
           - refs/tags/*
+      branch:
+        exclude:
+          - renovate/*
 
-  - name: build-and-push
+  - name: pypi_publish
+    image: python:3.10
+    volumes:
+      - name: poetry_cache
+        path: /root/.cache/pypoetry/virtualenvs
+      - name: pip_cache
+        path: /root/.cache/pip/
+    environment:
+      USERNAME:
+        from_secret: GITEA_REPO_USERNAME
+      PASSWORD:
+        from_secret: GITEA_REPO_PASSWORD
+    commands:
+      - pip install poetry
+      - poetry config repositories.gitea https://git.snas.black-burn.ch/api/packages/${DRONE_REPO_NAMESPACE,,}/pypi
+      - poetry publish --build --repository gitea --username $USERNAME --password $PASSWORD
+    when:
+      ref:
+        - refs/tags/*
+      branch:
+        exclude:
+          - renovate/*
+
+  - name: build-release
     image: plugins/docker
     settings:
       username:
-        from_secret: NUCNAS_DOCKER_USERNAME
+        from_secret: NUCNAS_GITEA_DOCKER_USERNAME
       password:
-        from_secret: NUCNAS_DOCKER_PASSWORD
-      repo: docker.snas.black-burn.ch/${DRONE_REPO_NAMESPACE,,}/${DRONE_REPO_NAME,,}
-      registry: docker.snas.black-burn.ch
+        from_secret: NUCNAS_GITEA_DOCKER_PASSWORD
+      repo: git.snas.black-burn.ch/${DRONE_REPO_NAMESPACE,,}/${DRONE_REPO_NAME,,}
+      registry: git.snas.black-burn.ch
+      auto_tag: true
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
     when:
       ref:
         - refs/tags/*
+      branch:
+        exclude:
+          - renovate/*
 
   - name: discord notification
     image: appleboy/drone-discord
