@@ -24,7 +24,7 @@ ENV PATH="/root/.local/bin:$PATH"
 # Install the env
 COPY poetry.lock .
 COPY pyproject.toml .
-RUN poetry install --no-interaction --no-ansi --without dev
+RUN poetry install --no-interaction --no-ansi --without dev --no-root
 
 # Copy the files
 COPY ocma /ocma
