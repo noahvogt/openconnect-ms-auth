@@ -73,6 +73,9 @@ steps:
         {{/success}}
 
 volumes:
+  - name: docker_sock
+    host:
+      path: /var/run/docker.sock
   - name: pip_cache
     host:
       path: /tmp/drone/cache/pip
