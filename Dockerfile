@@ -18,13 +18,13 @@ RUN chmod +x geckodriver
 RUN cp geckodriver /usr/local/bin/
 
 # Install poetry
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-ENV PATH="${PATH}:/root/.poetry/bin"
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/root/.local/bin:$PATH"
 
 # Install the env
 COPY poetry.lock .
 COPY pyproject.toml .
-RUN poetry install --no-interaction --no-ansi --no-dev
+RUN poetry install --no-interaction --no-ansi --without dev
 
 # Copy the files
 COPY ocma /ocma
