@@ -110,15 +110,15 @@ volumes:
   - name: docker_sock
     host:
       path: /var/run/docker.sock
-  - name: pip_cache
-    host:
-      path: /tmp/drone/cache/pip
   - name: poetry_cache
     host:
-      path: /tmp/drone/cache/poetry
+      path: /tmp-drone/cache/poetry
+  - name: pip_cache
+    host:
+      path: /tmp-drone/cache/pip
   - name: poetry_bin
     host:
-      path: /tmp/drone/cache/poetry_bin
+      path: /tmp-drone/cache/poetry_bin
   - name: pre_commit_environments
     host:
-      path: /tmp/drone/cache/pre_commit_environments
+      path: /tmp-drone/cache/pre_commit_environments
