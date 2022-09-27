@@ -4,7 +4,7 @@ name: default
 
 steps:
   - name: test
-    image: python:3.10
+    image: git.snas.black-burn.ch/sean/poetry-in-a-container:3.10
     volumes:
       - name: poetry_cache
         path: /root/.cache/pypoetry/virtualenvs
@@ -15,8 +15,6 @@ steps:
       - name: pre_commit_environments
         path: /root/.cache/pre-commit
     commands:
-      - curl -sSL https://install.python-poetry.org | python3 -
-      - export PATH="/root/.local/bin:$PATH"
       - poetry install
       - poetry run pre-commit run -a
 
