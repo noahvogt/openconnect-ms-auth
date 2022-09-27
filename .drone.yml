@@ -81,6 +81,25 @@ steps:
         exclude:
           - renovate/*
 
+  - name: semantic-release
+    image: git.snas.black-burn.ch/sean/semantic-release-in-a-container:1
+    environment:
+      GITEA_URL:
+        from_secret: GITEA_URL
+      GITEA_TOKEN:
+        from_secret: GITEA_SEMANTIC_RELEASE_TOKEN
+    commands:
+      - semantic-release
+    when:
+      branch:
+        - "*.*.x"
+        - main
+        - master
+        - next
+        - next-major
+        - beta
+        - alpha
+
   - name: discord notification
     image: appleboy/drone-discord
     when:
