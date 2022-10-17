@@ -2,14 +2,25 @@
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
-    "@saithodev/semantic-release-gitea",
     "@bjoluc/semantic-release-config-poetry",
+    "@semantic-release/changelog",
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "npx prettier --write CHANGELOG.md && poetry version ${nextRelease.version}"
+      }
+    ],
     [
       "@semantic-release/git",
       {
-        "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}"
+        "assets": [
+          "CHANGELOG.md",
+          "pyproject.toml"
+        ],
+        "message": "chore(release): ${nextRelease.version}[CI SKIP]\n\n${nextRelease.notes}"
       }
-    ]
+    ],
+    "@saithodev/semantic-release-gitea"
   ],
   "tagFormat": "${version}",
   "branches": [
