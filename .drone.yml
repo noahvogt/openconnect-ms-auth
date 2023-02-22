@@ -4,7 +4,7 @@ name: default
 
 steps:
   - name: test
-    image: git.snas.black-burn.ch/sean/poetry-in-a-container:3.10
+    image: git.snas.black-burn.ch/sean/poetry-in-a-container:3.11
     volumes:
       - name: poetry_cache
         path: /root/.cache/pypoetry/virtualenvs
