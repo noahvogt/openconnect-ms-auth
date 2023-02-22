@@ -210,7 +210,7 @@ def _fill_mfa(driver: webdriver.Firefox, mfa_secret: Optional[str]) -> None:
 
 
 def _confirm_stay_signed_in(driver: webdriver.Firefox) -> bool:
-    LOGGER.info("Cheking if we should confirm if we should stay signed in")
+    LOGGER.info("Checking if we should confirm if we should stay signed in")
 
     if not _is_on_ms_login_page(driver):
         LOGGER.info("Already logged in, can't confirm 'stay signed in'")
