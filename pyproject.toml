@@ -14,18 +14,13 @@ python = "^3.9"
 selenium = "^4.1.0"
 OTPpy = "^0.1.2"
 
-[tool.poetry.dev-dependencies]
-mypy = "^0.990"
-pydocstyle = "^6.1.1"
-black = "^22.1.0"
-pytest = "^7.0.1"
-
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
 pre-commit = "^3.0.4"
 pydocstyle = "^6.1.1"
 pylint = "^2.16.2"
 mypy = "^1.0.1"
+pytest = "^7.2.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
