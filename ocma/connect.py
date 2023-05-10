@@ -178,6 +178,8 @@ def _fill_mfa(driver: webdriver.Firefox, mfa_secret: Optional[str]) -> None:
     if driver.current_url.endswith("/login") and mfa_secret is None:
         raise ValueError("You need to supply your MFA secret to log in!")
 
+    _check_approval_screen(driver)
+
     # Check if we have an MFA code to enter
     if mfa_secret is None:
         LOGGER.info("Filling in login information")
@@ -207,6 +209,42 @@ def _fill_mfa(driver: webdriver.Firefox, mfa_secret: Optional[str]) -> None:
             # Did not find an error
             LOGGER.info("MFA seems to have been accepted, no errors")
             break
+
+
+def _check_approval_screen(driver: webdriver.Firefox) -> None:
+    if not _find_element(driver, By.ID, "idDiv_SAOTCAS_Title"):
+        return
+
+    found_sign_in_other_way = False
+    for _ in range(16):
+        try:
+            driver.find_element(By.ID, "signInAnotherWay").click()
+            found_sign_in_other_way = True
+            break
+
+        except (ElementClickInterceptedException, StaleElementReferenceException):
+            pass
+        except NoSuchElementException:
+            pass
+
+        time.sleep(ELEMENT_CHECK_DELAY)
+
+    if not found_sign_in_other_way:
+        raise ValueError("Failed to find the option to sing in another way!")
+
+    for _ in range(16):
+        try:
+            driver.find_element(By.XPATH, "//div[@data-value='PhoneAppOTP']").click()
+            break
+
+        except (ElementClickInterceptedException, StaleElementReferenceException):
+            pass
+        except NoSuchElementException:
+            pass
+
+        time.sleep(ELEMENT_CHECK_DELAY)
+
+    return
 
 
 def _confirm_stay_signed_in(driver: webdriver.Firefox) -> bool:
