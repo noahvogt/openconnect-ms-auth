@@ -12,6 +12,13 @@ Simply run `pip install --upgrade git+https://git.snas.black-burn.ch/FHNW/openco
 install the package globally. Then the "ocma" command should be available. Try it out by
 typing `ocma -h`.
 
+## Password character limitations
+
+There are some special characters, that might make your life difficult and are best left out of your password:
+
+- `$`: Most often in bash, this will try and reference a variable, do not use it
+- `!`: Most often in bash, this will repeat the last command
+
 ## Example CLI usage
 
 Replace `[username]` and `[password]` with your own information. If you have your account
