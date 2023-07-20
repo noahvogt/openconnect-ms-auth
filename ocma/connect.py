@@ -127,10 +127,20 @@ def _fill_login(driver: webdriver.Firefox, username: str, password: str) -> None
     driver.find_element(By.NAME, USERNAME_INPUT_NAME).send_keys(username)
     click_continue(driver)
 
+    if _find_element(driver, by=By.ID, item="usernameError", wait=5):
+        error_msg = driver.find_element(By.ID, "usernameError").text
+        LOGGER.error("Invalid username or other error (Message: %s)", error_msg)
+        raise ValueError(f"Invalid username or other error (Message: {error_msg})")
+
     if not _element_interactable(driver, By.NAME, PASSWORD_INPUT_NAME):
         raise ValueError("Could not find password input!")
     driver.find_element(By.NAME, PASSWORD_INPUT_NAME).send_keys(password)
     click_continue(driver)
+
+    if _find_element(driver, by=By.ID, item="passwordError", wait=5):
+        error_msg = driver.find_element(By.ID, "passwordError").text
+        LOGGER.error("Invalid password or other error (Message: %s)", error_msg)
+        raise ValueError(f"Invalid password or other error (Message: {error_msg})")
 
     retries = MAX_RETRY_DOMAIN_CHECK
     while on_login_form(driver) and retries > 0:
@@ -166,7 +176,7 @@ def on_login_form(driver: webdriver.Firefox) -> bool:
     bool
         True if we are on the login form, else false.
     """
-    return "saml2" in driver.current_url
+    return "saml2" in driver.current_url  # or driver.current_url.endswith("login")
 
 
 def _fill_mfa(driver: webdriver.Firefox, mfa_secret: Optional[str]) -> None:
