@@ -1,3 +1,9 @@
+# [0.3.0](https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth/compare/0.2.0...0.3.0) (2023-08-08)
+
+### Features
+
+- Additional checks if login is valid ([3595059](https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth/commit/3595059addf604a6ea5c433c90304bcf265be4f0))
+
 # [0.2.0](https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth/compare/0.1.5...0.2.0) (2023-05-10)
 
 ### Features
