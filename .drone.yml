@@ -39,7 +39,7 @@ steps:
           - renovate/*
 
   - name: pypi_publish
-    image: python:3.11
+    image: python:3.12
     volumes:
       - name: poetry_cache
         path: /root/.cache/pypoetry/virtualenvs
