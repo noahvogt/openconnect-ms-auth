@@ -1,0 +1,38 @@
+version: "0.2"
+allowCompoundWords: true
+ignorePaths:
+  - .pre-commit-config.yaml
+  - pyproject.toml
+  - .gitlab-ci.yml
+  - cspell.config.yaml
+  - .vscode/*
+  - .mypy.ini
+  - .gitignore
+  - .releaserc
+  - CHANGELOG.md
+  - .drone.yml
+dictionaryDefinitions: []
+ignoreWords:
+  - cifs
+  - xvzf
+  - pyproject
+  - ansi
+  - ocma
+  - otppy
+  - loginfmt
+  - SAOTCC
+  - OCMA
+  - fromb
+  - TOTP
+  - totp
+  - otpauth
+  - FHNW
+  - fhnw
+  - NBSWY3DPEB3W64TMMQ
+  - idDiv_SAOTCAS_Title
+  - Aelon
+dictionaries: []
+words: []
+import:
+  - "@cspell/dict-de-ch/cspell-ext.json"
+  - "@cspell/dict-en-gb/cspell-ext.json"

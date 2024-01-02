@@ -3,20 +3,21 @@
 import logging
 import time
 from dataclasses import dataclass
-from typing import Optional
 from urllib.parse import urlparse
 
 from otppy import OTP
 from selenium import webdriver
-from selenium.common.exceptions import ElementClickInterceptedException
-from selenium.common.exceptions import ElementNotInteractableException
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import StaleElementReferenceException
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import (
+    ElementClickInterceptedException,
+    ElementNotInteractableException,
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.wait import WebDriverWait
 
 USERNAME_INPUT_NAME = "loginfmt"
 PASSWORD_INPUT_NAME = "passwd"
@@ -42,10 +43,10 @@ class VPNCookie:
     cookie: str
 
 
-def login(
+def login(  # noqa: PLR0913
     username: str,
     password: str,
-    mfa_secret: Optional[str] = None,
+    mfa_secret: str | None = None,
     vpn_site: str = "https://vpn.fhnw.ch",
     headless: bool = True,
     log_messages: bool = False,
@@ -59,9 +60,9 @@ def login(
         Microsoft account username.
     password : str
         Microsoft account password.
-    mfa_secret : Optional[str], optional
+    mfa_secret : str | None, optional
         Multifactor secret, by default None
-    vpn_site : _type_, optional
+    vpn_site : str, optional
         VPN site to log into, by default "https://vpn.fhnw.ch"
     headless : bool, optional
         If the browser should be run in headless mode, by default True
@@ -80,7 +81,7 @@ def login(
     """
     if log_messages:
         formatter = logging.Formatter(
-            "%(asctime)s: %(levelname)s - %(name)s - %(message)s"
+            "%(asctime)s: %(levelname)s - %(name)s - %(message)s",
         )
         fh_s = logging.StreamHandler()
         fh_s.setLevel(logging.INFO)
@@ -92,7 +93,7 @@ def login(
     options = FirefoxOptions()
     if headless:
         LOGGER.info("Running in headless mode")
-        options.add_argument("--headless")
+        options.add_argument("--headless")  # type: ignore
 
     driver = webdriver.Firefox(options=options)
     driver.get(vpn_site)
@@ -104,7 +105,7 @@ def login(
 
     if retries < 0:
         raise ValueError(
-            f"We never reached the MS login page! Currently on {driver.current_url}"
+            f"We never reached the MS login page! Currently on {driver.current_url}",
         )
 
     _fill_login(driver, username, password)
@@ -179,7 +180,7 @@ def on_login_form(driver: webdriver.Firefox) -> bool:
     return "saml2" in driver.current_url  # or driver.current_url.endswith("login")
 
 
-def _fill_mfa(driver: webdriver.Firefox, mfa_secret: Optional[str]) -> None:
+def _fill_mfa(driver: webdriver.Firefox, mfa_secret: str | None) -> None:
     LOGGER.info("Checking if we can fill in MFA information")
 
     _check_on_ms_login_page(driver)
@@ -197,7 +198,9 @@ def _fill_mfa(driver: webdriver.Firefox, mfa_secret: Optional[str]) -> None:
 
     for i in range(MFA_MAX_RETRY_COUNT):
         LOGGER.info(
-            "Filling in MFA information (Try %s of %s)", i + 1, MFA_MAX_RETRY_COUNT
+            "Filling in MFA information (Try %s of %s)",
+            i + 1,
+            MFA_MAX_RETRY_COUNT,
         )
         if not _find_element(driver, By.NAME, MFA_INPUT_NAME):
             time.sleep(ELEMENT_CHECK_DELAY)
@@ -266,7 +269,7 @@ def _confirm_stay_signed_in(driver: webdriver.Firefox) -> bool:
 
     if not driver.current_url.endswith("/common/SAS/ProcessAuth"):
         LOGGER.info(
-            "We have reached a dead end. We have completed the login, but not on the 'stay signed in' page"
+            "We have reached a dead end. We have completed the login, but not on the 'stay signed in' page",
         )
         return False
 
@@ -278,23 +281,28 @@ def _confirm_stay_signed_in(driver: webdriver.Firefox) -> bool:
 def _find_element(driver: webdriver.Firefox, by: str, item: str, wait: int = 8) -> bool:
     try:
         w = WebDriverWait(driver, wait)
-        w.until(EC.presence_of_element_located((by, item)))
-        return True
+        w.until(ec.presence_of_element_located((by, item)))
 
     except TimeoutException:
         return False
 
+    return True
+
 
 def _element_interactable(
-    driver: webdriver.Firefox, by: str, item: str, wait: int = 8
+    driver: webdriver.Firefox,
+    by: str,
+    item: str,
+    wait: int = 8,
 ) -> bool:
     try:
         w = WebDriverWait(driver, wait)
-        w.until(EC.element_to_be_clickable((by, item)))
-        return True
+        w.until(ec.element_to_be_clickable((by, item)))
 
     except ElementNotInteractableException:
         return False
+
+    return True
 
 
 def _is_on_install_page(driver: webdriver.Firefox) -> None:
@@ -308,7 +316,7 @@ def _get_webvpn_cookie(driver: webdriver.Firefox) -> VPNCookie:
 
     if webvpn_cookie is None:
         raise ValueError(
-            "Failed to find the webvpn cookie. Maybe the authentication has failed?"
+            "Failed to find the webvpn cookie. Maybe the authentication has failed?",
         )
 
     webvpn_domain = webvpn_cookie["domain"]
@@ -344,12 +352,12 @@ def click_continue(driver: webdriver.Firefox, btn_id: str = CONTINUE_BUTTON_ID) 
     for _ in range(16):
         try:
             driver.find_element(By.ID, btn_id).click()
-            return True
-
         except (ElementClickInterceptedException, StaleElementReferenceException):
             pass
         except NoSuchElementException:
             pass
+        else:
+            return True
 
         time.sleep(ELEMENT_CHECK_DELAY)
     return False

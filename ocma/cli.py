@@ -1,13 +1,19 @@
 """CLI interface."""
 
 import argparse
-from typing import Optional
 
 from ocma import connect
 
 
 def run() -> None:
-    """Run the CLI interface."""
+    """
+    Run the CLI interface.
+
+    Raises
+    ------
+    ValueError
+        If the MFS secret is invalid
+    """
     parser = argparse.ArgumentParser(description="openconnect-microsoft-authenticator")
 
     # add argument
@@ -68,7 +74,7 @@ def run() -> None:
     args = parser.parse_args()
 
     username: str = args.username
-    password: Optional[str] = args.password
+    password: str | None = args.password
     mfa_secret: str = args.mfa
     vpn_url: str = args.vpn_url
     headless: bool = args.show_head
