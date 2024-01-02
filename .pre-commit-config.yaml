@@ -3,12 +3,12 @@ exclude: ^(data/.*|.vscode/.*|poetry.lock)$
 repos:
   - repo: https://github.com/commitizen-tools/commitizen
     # Please run `pre-commit install --hook-type commit-msg` to check commit messages
-    rev: 3.2.1
+    rev: v3.13.0
     hooks:
       - id: commitizen
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-yaml
       - id: check-json
@@ -22,31 +22,31 @@ repos:
         args: ["--maxkb=1000"]
 
   - repo: https://github.com/codespell-project/codespell.git
-    rev: v2.2.4
+    rev: v2.2.6
     hooks:
       - id: codespell
         name: codespell
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.4.0
+    rev: v3.15.0
     hooks:
       - id: pyupgrade
         args: [--py39-plus]
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v2.1.3
+    rev: v2.4.0
     hooks:
       - id: pycln
         name: pycln (python)
         args: [--config=pyproject.toml]
 
   - repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 23.12.1
     hooks:
       - id: black
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
         name: isort (python)
@@ -58,14 +58,14 @@ repos:
         name: pydocstyle
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.2.0
+    rev: v1.8.0
     hooks:
       - id: mypy
         name: mypy
         additional_dependencies: ["types-pytz"]
 
   - repo: https://github.com/pycqa/pylint
-    rev: v2.17.4
+    rev: v3.0.3
     hooks:
       - id: pylint
         types: [python]
