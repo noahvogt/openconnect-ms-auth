@@ -13,24 +13,25 @@ ignorePaths:
   - .drone.yml
 dictionaryDefinitions: []
 ignoreWords:
-  - cifs
-  - xvzf
-  - pyproject
-  - ansi
-  - ocma
-  - otppy
-  - loginfmt
-  - SAOTCC
-  - OCMA
-  - fromb
-  - TOTP
-  - totp
-  - otpauth
-  - FHNW
-  - fhnw
-  - NBSWY3DPEB3W64TMMQ
-  - idDiv_SAOTCAS_Title
   - Aelon
+  - ansi
+  - cifs
+  - fhnw
+  - FHNW
+  - fromb
+  - idDiv_SAOTCAS_Title
+  - loginfmt
+  - NBSWY3DPEB3W64TMMQ
+  - ocma
+  - OCMA
+  - otpauth
+  - otppy
+  - pipx
+  - pyproject
+  - SAOTCC
+  - totp
+  - TOTP
+  - xvzf
 dictionaries: []
 words: []
 import:

@@ -6,11 +6,13 @@ openconnect VPN client.
 It uses selenium to open the login webpage and fill in the form details. At the end, it
 fetches the correct VPN HOST and the Cisco AnyConnect `webvpn` cookie.
 
-## Installation for CLI usage
+## Installing for CLI usage
 
-Simply run `pip install --upgrade git+https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth` to
+Simply run `pipx install git+https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth` to
 install the package globally. Then the "ocma" command should be available. Try it out by
 typing `ocma -h`.
+
+To upgrade the CLI wrapper after a new release, run the following command: `pipx upgrade ocma`
 
 ## Password character limitations
 
@@ -34,7 +36,7 @@ eval $( ocma -u [username] -p [password] -m [mfa_secret] --print-to-stdout );
 
 ## Example usage in a Python project
 
-Add with poetry: `poetry add git+https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth`
+Add with poetry (or pip, ...): `poetry add git+https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth`
 
 ```python
 from ocma import connect
