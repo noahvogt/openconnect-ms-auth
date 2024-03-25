@@ -5,7 +5,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Env
 ENV IS_DOCKER=true
 ENV PYTHONPATH=/
-ENV GECKO_DRIVER_VERSION='v0.30.0'
+ENV GECKO_DRIVER_VERSION='v0.34.0'
 ENV PATH="/root/.local/bin:$PATH"
 
 # install VPN utils
@@ -21,7 +21,7 @@ RUN curl -OL https://github.com/mozilla/geckodriver/releases/download/$GECKO_DRI
   && rm geckodriver-$GECKO_DRIVER_VERSION-linux64.tar.gz \
   && chmod +x geckodriver \
   && cp geckodriver /usr/local/bin/ \
-  curl -sSL https://install.python-poetry.org | python3 -
+  && curl -sSL https://install.python-poetry.org | python3 -
 
 # Install the env
 WORKDIR /
