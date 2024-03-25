@@ -1,39 +1,55 @@
 version: "0.2"
-allowCompoundWords: true
+allowCompoundWords: false
 ignorePaths:
+  - "*.svg"
   - .pre-commit-config.yaml
-  - pyproject.toml
-  - .gitlab-ci.yml
-  - cspell.config.yaml
   - .vscode/*
-  - .mypy.ini
   - .gitignore
-  - .releaserc
+  - cspell.config.yaml
+  - .copier-answers.yml
+  - "*.svg"
+  - .renovate.json
+  - .woodpecker/*
+  - .releaserc.yaml
   - CHANGELOG.md
-  - .drone.yml
+  - .mypy.ini
+  - pyproject.toml
 dictionaryDefinitions: []
-ignoreWords:
-  - Aelon
+ignoreWords: []
+dictionaries: []
+words:
+  - 3Aelon
   - ansi
   - cifs
   - fhnw
-  - FHNW
-  - fromb
-  - idDiv_SAOTCAS_Title
+  - firefox
+  - fromb32
+  - geckodriver
+  - hadolint
+  - interactable
+  - Interactable
+  - kwargs
+  - levelname
   - loginfmt
+  - microsoftonline
   - NBSWY3DPEB3W64TMMQ
   - ocma
-  - OCMA
+  - openconnect
+  - Openconnect
+  - Openconnect ms auth
+  - openconnect_ms_auth
+  - openvpn
   - otpauth
   - otppy
+  - pipefail
   - pipx
   - pyproject
+  - PYTHONPATH
+  - SAOTCAS
   - SAOTCC
   - totp
-  - TOTP
+  - webvpn
   - xvzf
-dictionaries: []
-words: []
 import:
   - "@cspell/dict-de-ch/cspell-ext.json"
   - "@cspell/dict-en-gb/cspell-ext.json"

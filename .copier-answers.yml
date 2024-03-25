@@ -1,0 +1,21 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 1.4.0
+_src_path: ssh://git@git.snas.black-burn.ch:43057/templates/copier-python.git
+author: Sean Blackburn
+ci: woodpecker
+common_packages: []
+description: Openconnect Microsoft Authenticator
+email: birdicode@gmail.com
+git_username: Sean
+has_dockerfile: true
+ipython_notebooks: false
+license: mit
+project_name: Openconnect ms auth
+publish_pypi: true
+python_version: '3.11'
+repo_location: gitea
+use_renovate: true
+use_semantic_release: true
+use_unittests: true
+using_sphinx: false
+vulnerability_scanning: false

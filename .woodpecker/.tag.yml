@@ -1,0 +1,62 @@
+when:
+  event:
+    - tag
+    - deployment
+
+steps:
+  publish-docker:
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      username:
+        from_secret: NUCNAS_GITEA_DOCKER_USERNAME
+      password:
+        from_secret: NUCNAS_GITEA_DOCKER_PASSWORD
+      repo: git.snas.black-burn.ch/${CI_REPO,,}
+      registry: git.snas.black-burn.ch
+      platforms: linux/amd64
+      auto_tag: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  publish-pypi:
+    image: python:3.11
+    volumes:
+      - /tmp-woodpecker/cache/poetry:/root/.cache/pypoetry/virtualenvs
+      - /tmp-woodpecker/cache/pip:/root/.cache/pip/
+    secrets:
+      - GITEA_REPO_USERNAME
+      - GITEA_REPO_PASSWORD
+    commands:
+      - pip install poetry
+      - poetry config repositories.gitea https://git.snas.black-burn.ch/api/packages/${CI_REPO_OWNER,,}/pypi
+      - poetry publish --build --repository gitea --username $${GITEA_REPO_USERNAME} --password $${GITEA_REPO_PASSWORD}
+    when:
+      event: tag
+      branch:
+        exclude:
+          - renovate/*
+
+  notify:
+    image: git.snas.black-burn.ch/sean/woodpecker-apprise:1
+    when:
+      - status: [failure, success]
+      - branch:
+          exclude:
+            - renovate/*
+    settings:
+      evaluate: "not pipeline.success"
+      services:
+        - url:
+            from_secret: APPRISE_NOTIFICATION_URL
+      content:
+
+        title: "{% if pipeline.success %}🎉{% else %}🚨{% endif %} | {{ repo.full_name }} ({{ commit.branch }} - {{ commit.sha[0:8] }})"
+        body: |
+          {% if pipeline.success %}
+          🎉 New release published: {{ commit.tag }}
+          {% else %}
+          🚨 New release published, but the build failed: {{ commit.tag }}
+          {% endif %}
+
+          View Pipeline: {{ pipeline.url }}
+          View Repo: {{ repo.url }}

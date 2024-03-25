@@ -43,7 +43,7 @@ class VPNCookie:
     cookie: str
 
 
-def login(  # noqa: PLR0913
+def login(  # noqa: PLR0913 # pylint: disable=too-many-arguments
     username: str,
     password: str,
     mfa_secret: str | None = None,
@@ -61,7 +61,7 @@ def login(  # noqa: PLR0913
     password : str
         Microsoft account password.
     mfa_secret : str | None, optional
-        Multifactor secret, by default None
+        Multi-factor secret, by default None
     vpn_site : str, optional
         VPN site to log into, by default "https://vpn.fhnw.ch"
     headless : bool, optional
@@ -93,7 +93,7 @@ def login(  # noqa: PLR0913
     options = FirefoxOptions()
     if headless:
         LOGGER.info("Running in headless mode")
-        options.add_argument("--headless")  # type: ignore
+        options.add_argument("--headless")
 
     driver = webdriver.Firefox(options=options)
     driver.get(vpn_site)
@@ -365,7 +365,7 @@ def click_continue(driver: webdriver.Firefox, btn_id: str = CONTINUE_BUTTON_ID) 
 
 def get_mfa_code(secret: str) -> str:
     """
-    Get the multifactor authentication code for the given secret.
+    Get the multi-factor authentication code for the given secret.
 
     Parameters
     ----------

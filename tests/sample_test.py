@@ -1,5 +1,6 @@
-"""Openconnect MS auth tests."""
+"""A sample test."""
 
 
 def test_sample() -> None:
-    """Just a sample test."""
+    """Run a sample test."""
+    assert True

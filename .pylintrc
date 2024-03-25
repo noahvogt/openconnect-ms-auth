@@ -1,10 +1,10 @@
 [MASTER]
 
 [MESSAGES CONTROL]
-disable=import-error,too-many-arguments
+disable=too-few-public-methods,import-error,too-many-instance-attributes
 
 [FORMAT]
 max-line-length=150
 
 [BASIC]
-good-names=w, by, i, e
+good-names=i

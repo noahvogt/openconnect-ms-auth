@@ -1,1 +1,1 @@
-"""Openconnect MS auth tests."""
+"""Openconnect ms auth tests."""
