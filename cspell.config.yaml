@@ -43,6 +43,7 @@ words:
   - otppy
   - pipefail
   - pipx
+  - pylint
   - pyproject
   - PYTHONPATH
   - SAOTCAS

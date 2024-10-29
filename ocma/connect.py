@@ -43,7 +43,7 @@ class VPNCookie:
     cookie: str
 
 
-def login(  # noqa: PLR0913 # pylint: disable=too-many-arguments
+def login(  # noqa: PLR0913 # pylint: disable=too-many-arguments,too-many-positional-arguments
     username: str,
     password: str,
     mfa_secret: str | None = None,
