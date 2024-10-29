@@ -8,7 +8,7 @@ fetches the correct VPN HOST and the Cisco AnyConnect `webvpn` cookie.
 
 ## Installing for CLI usage
 
-Simply run `pipx install --index-url https://git.snas.black-burn.ch/api/packages/FHNW/pypi/simple/ ocma`
+Simply run `pipx install --index-url https://git.snas.black-burn.ch/api/packages/FHNW/pypi/simple/ --pip-args='--extra-index-url https://pypi.org/simple/' ocma`
 to install the package globally. Then the "ocma" command should be available.
 Try it out by typing `ocma -h`.
 
