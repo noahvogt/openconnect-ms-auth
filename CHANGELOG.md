@@ -1,3 +1,9 @@
+## [0.3.1](https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth/compare/0.3.0...0.3.1) (2024-10-29)
+
+### Bug Fixes
+
+- Install instructions ([aee4fd8](https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth/commit/aee4fd8ab5dfaf096843be4bdfb9348ec6fb3d35))
+
 # [0.3.0](https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth/compare/0.2.0...0.3.0) (2023-08-08)
 
 ### Features
