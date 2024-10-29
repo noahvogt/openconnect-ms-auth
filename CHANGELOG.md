@@ -1,3 +1,9 @@
+## [0.3.2](https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth/compare/0.3.1...0.3.2) (2024-10-29)
+
+### Bug Fixes
+
+- Change case of readme ([01029d1](https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth/commit/01029d1beefe471830f4f6d2ac50c1dc6c3eee09))
+
 ## [0.3.1](https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth/compare/0.3.0...0.3.1) (2024-10-29)
 
 ### Bug Fixes
