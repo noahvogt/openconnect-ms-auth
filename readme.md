@@ -8,9 +8,9 @@ fetches the correct VPN HOST and the Cisco AnyConnect `webvpn` cookie.
 
 ## Installing for CLI usage
 
-Simply run `pipx install git+https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth` to
-install the package globally. Then the "ocma" command should be available. Try it out by
-typing `ocma -h`.
+Simply run `pipx install --index-url https://git.snas.black-burn.ch/api/packages/FHNW/pypi/simple/ ocma`
+to install the package globally. Then the "ocma" command should be available.
+Try it out by typing `ocma -h`.
 
 To upgrade the CLI wrapper after a new release, run the following command: `pipx upgrade ocma`
 
