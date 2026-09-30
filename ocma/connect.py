@@ -1,5 +1,6 @@
 """Openconnect-Microsoft-login connection helpers."""
 
+import json
 import logging
 import time
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ from selenium.common.exceptions import (
     NoSuchElementException,
     StaleElementReferenceException,
     TimeoutException,
+    WebDriverException,
 )
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
@@ -34,6 +36,9 @@ MAX_RETRY_COOKIE_CHECK = 16
 STEP_TIMEOUT = 15
 APPROVAL_CHECK_TIMEOUT = 8
 MFA_RESULT_TIMEOUT = 2
+SESSION_CHECK_TIMEOUT = 10
+MS_LOGIN_URL = "https://login.microsoftonline.com/"
+SESSION_COOKIE_DOMAIN = "microsoftonline.com"
 MFA_MAX_RETRY_COUNT = 3
 ELEMENT_CHECK_DELAY = 0.5
 DOMAIN_CHECK_DELAY = 0.5
@@ -49,6 +54,7 @@ class VPNCookie:
 
     domain: str
     cookie: str
+    session: str | None = None
 
 
 def login(  # noqa: PLR0913,PLR0917 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -58,6 +64,7 @@ def login(  # noqa: PLR0913,PLR0917 # pylint: disable=too-many-arguments,too-man
     vpn_site: str = "https://vpn.fhnw.ch",
     headless: bool = True,
     log_messages: bool = False,
+    session: str | None = None,
 ) -> VPNCookie:
     """
     Log in to the vpn.
@@ -76,11 +83,15 @@ def login(  # noqa: PLR0913,PLR0917 # pylint: disable=too-many-arguments,too-man
         If the browser should be run in headless mode, by default True
     log_messages : bool, optional
         If messages should be logged to the console, by default False
+    session : str | None, optional
+        Session cookies of an earlier login, as stored by a previous run, by
+        default None. A session that is still valid skips the login entirely.
 
     Returns
     -------
     VPNCookie
-        Cookie to log into the openconnect VPN.
+        Cookie to log into the openconnect VPN. Its `session` holds the session
+        cookies to store when a full login was needed, and None otherwise.
 
     Raises
     ------
@@ -104,22 +115,97 @@ def login(  # noqa: PLR0913,PLR0917 # pylint: disable=too-many-arguments,too-man
         options.add_argument("--headless")
 
     driver = webdriver.Firefox(options=options)
-    driver.get(vpn_site)
 
-    retries = MAX_RETRY_DOMAIN_CHECK
-    while not _is_on_ms_login_page(driver) and retries > 0:
-        retries -= 1
-        time.sleep(DOMAIN_CHECK_DELAY)
+    try:
+        if session:
+            _restore_session(driver, session)
 
-    if retries < 0:
-        raise ValueError(
-            f"We never reached the MS login page! Currently on {driver.current_url}",
-        )
+        driver.get(vpn_site)
 
-    _fill_login(driver, username, password)
-    _fill_mfa(driver, mfa_secret)
-    _confirm_stay_signed_in(driver)
-    return _get_webvpn_cookie(driver, vpn_site)
+        if session and _skip_login_with_session(driver):
+            LOGGER.info("Reused the stored session, no login needed")
+            return _get_webvpn_cookie(driver, vpn_site)
+
+        retries = MAX_RETRY_DOMAIN_CHECK
+        while not _is_on_ms_login_page(driver) and retries > 0:
+            retries -= 1
+            time.sleep(DOMAIN_CHECK_DELAY)
+
+        if retries < 0:
+            raise ValueError(
+                f"We never reached the MS login page! Currently on {driver.current_url}",
+            )
+
+        _fill_login(driver, username, password)
+        _fill_mfa(driver, mfa_secret)
+        _confirm_stay_signed_in(driver)
+
+        vpn_cookie = _get_webvpn_cookie(driver, vpn_site)
+        vpn_cookie.session = _dump_session(driver)
+
+    finally:
+        driver.quit()
+
+    return vpn_cookie
+
+
+def _restore_session(driver: webdriver.Firefox, session: str) -> None:
+    # Cookies can only be added for the domain the browser is currently on.
+    try:
+        cookies = json.loads(session)
+
+    except json.JSONDecodeError:
+        LOGGER.warning("The stored session is not valid JSON, ignoring it")
+        return
+
+    LOGGER.info("Restoring %s session cookies", len(cookies))
+    driver.get(MS_LOGIN_URL)
+
+    for cookie in cookies:
+        try:
+            driver.add_cookie(cookie)
+
+        except WebDriverException:
+            LOGGER.info("Could not restore one of the session cookies")
+
+
+def _dump_session(driver: webdriver.Firefox) -> str | None:
+    driver.get(MS_LOGIN_URL)
+    cookies = [
+        cookie
+        for cookie in driver.get_cookies()
+        if SESSION_COOKIE_DOMAIN in cookie.get("domain", "")
+    ]
+
+    if not cookies:
+        LOGGER.info("Found no session cookies to store")
+        return None
+
+    LOGGER.info("Storing %s session cookies", len(cookies))
+    return json.dumps(cookies)
+
+
+def _skip_login_with_session(driver: webdriver.Firefox) -> bool:
+    # Either the portal hands out the cookie right away, or the session is
+    # spent and we are back at the login form.
+    _wait_for_any(
+        driver,
+        [
+            lambda d: d.get_cookie("webvpn") is not None,
+            ec.presence_of_element_located((By.NAME, USERNAME_INPUT_NAME)),
+        ],
+        SESSION_CHECK_TIMEOUT,
+    )
+
+    if driver.get_cookie("webvpn") is not None:
+        return True
+
+    # Leftovers of a spent session can land us on an account picker or a
+    # prefilled form, neither of which _fill_login knows how to drive.
+    LOGGER.info("The stored session did not work out, starting clean")
+    driver.delete_all_cookies()
+    driver.get(driver.current_url)
+    return False
 
 
 def _fill_login(driver: webdriver.Firefox, username: str, password: str) -> None:
@@ -394,14 +480,11 @@ def _get_webvpn_cookie(driver: webdriver.Firefox, vpn_site: str) -> VPNCookie:
         webvpn_cookie = _poll_webvpn_cookie(driver)
 
     if webvpn_cookie is None:
-        current_url = driver.current_url
-        driver.close()
         raise ValueError(
-            f"Failed to find the webvpn cookie, ended up on {current_url}. "
+            f"Failed to find the webvpn cookie, ended up on {driver.current_url}. "
             "Maybe the authentication has failed?",
         )
 
-    driver.close()
     return VPNCookie(
         domain=webvpn_cookie["domain"],
         cookie=webvpn_cookie["value"],

@@ -2,6 +2,7 @@
 
 import argparse
 import io
+import pathlib
 
 import pytest
 
@@ -72,3 +73,18 @@ def test_failing_command_raises() -> None:
     """Fail if the secret command exits non-zero."""
     with pytest.raises(ValueError, match="Failed to read a secret"):
         cli._resolve_credentials(_args(password_command="false"))
+
+
+def test_write_command_hands_the_data_to_stdin(tmp_path: pathlib.Path) -> None:
+    """Write the session to the stdin of the configured command."""
+    target = tmp_path / "session.json"
+    cli._write_command(f"sh -c 'cat > {target}'", '[{"name": "ESTSAUTH"}]')
+    assert target.read_text() == '[{"name": "ESTSAUTH"}]'
+
+
+def test_write_command_warns_but_does_not_raise(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Report a failing store command without failing the login."""
+    cli._write_command("false", "whatever")
+    assert "could not store the session" in capsys.readouterr().err

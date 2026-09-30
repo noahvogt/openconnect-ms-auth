@@ -45,6 +45,35 @@ def _read_command(command: str) -> str:
     return result.stdout.splitlines()[0].strip() if result.stdout.strip() else ""
 
 
+def _write_command(command: str, data: str) -> None:
+    """
+    Hand a secret to the stdin of a command.
+
+    A failure here is reported but not fatal: it only means the session could
+    not be stored, and the next run logs in from scratch.
+
+    Parameters
+    ----------
+    command : str
+        Command to run. Split according to shell syntax, but not run in a shell.
+    data : str
+        What to write to its stdin.
+    """
+    try:
+        subprocess.run(
+            shlex.split(command),
+            input=data,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as e:
+        print(
+            f"Warning: could not store the session with '{command}': {e}",
+            file=sys.stderr,
+        )
+
+
 def _read_stdin() -> list[str]:
     """
     Read the credentials passed on stdin.
@@ -154,6 +183,27 @@ def run() -> None:
     )
 
     parser.add_argument(
+        "--session-command",
+        metavar="command",
+        type=str,
+        help=(
+            "Command printing the session cookies of an earlier login on stdout, "
+            "e.g. 'secret-tool lookup service fhnw-vpn type session'. A session "
+            "that is still valid skips the login."
+        ),
+    )
+    parser.add_argument(
+        "--session-save-command",
+        metavar="command",
+        type=str,
+        help=(
+            "Command storing the session cookies handed to it on stdin, e.g. "
+            '\'secret-tool store --label="FHNW VPN session" service fhnw-vpn '
+            "type session'. Only run after a full login."
+        ),
+    )
+
+    parser.add_argument(
         "--vpn-url",
         nargs="?",
         metavar="url",
@@ -193,6 +243,15 @@ def run() -> None:
         except ValueError as e:
             raise ValueError("Your MFA secret is invalid!") from e
 
+    session = None
+    if args.session_command:
+        try:
+            session = _read_command(args.session_command)
+
+        except ValueError as e:
+            # No session stored yet, or the store is unreachable: log in fully.
+            print(f"Warning: {e}", file=sys.stderr)
+
     cookie = connect.login(
         username=args.username,
         password=password,
@@ -200,7 +259,11 @@ def run() -> None:
         vpn_site=args.vpn_url,
         headless=not args.show_browser,
         log_messages=args.v,
+        session=session,
     )
+
+    if args.session_save_command and cookie.session:
+        _write_command(args.session_save_command, cookie.session)
 
     if args.print_to_stdout:
         print(f"VPN_HOST={cookie.domain}")

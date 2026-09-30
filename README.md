@@ -41,6 +41,22 @@ The TOTP secret is the `secret` parameter of the enrollment URL. For
 `otpauth://totp/FHNW%3Aelon.musk%40students.fhnw.ch?secret=NBSWY3DPEB3W64TMMQ&issuer=Microsoft`
 it is `NBSWY3DPEB3W64TMMQ`.
 
+## Reusing a session
+
+The login can be skipped entirely while the Microsoft session of an earlier
+login is still valid. `--session-command` reads the stored session cookies,
+`--session-save-command` stores them again after a full login:
+
+```shell
+--session-command 'secret-tool lookup service fhnw-vpn type session'
+--session-save-command 'secret-tool store --label="FHNW VPN session" service fhnw-vpn type session'
+```
+
+Both are optional. Without a stored session, or once Microsoft expires it, the
+full login runs and stores a fresh one. The stored session is worth as much as
+a logged in browser, so keep it where the password and the TOTP secret already
+are.
+
 ## Example CLI usage
 
 ```shell
