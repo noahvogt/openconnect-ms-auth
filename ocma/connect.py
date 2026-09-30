@@ -3,6 +3,7 @@
 import logging
 import time
 from dataclasses import dataclass
+from typing import Any
 from urllib.parse import urlparse
 
 import pyotp
@@ -25,11 +26,12 @@ MFA_INPUT_NAME = "otc"
 CONTINUE_BUTTON_ID = "idSIButton9"
 MFA_CONTINUE_BUTTON_ID = "idSubmit_SAOTCC_Continue"
 MFA_ERROR_TEXT_ID = "idSpan_SAOTCC_Error_OTC"
-VPN_INSTALL_PAGE_EXCLUSIVE_ELEMENT_ID = "provisioning_action_label"
 MAX_RETRY_DOMAIN_CHECK = 16
+MAX_RETRY_COOKIE_CHECK = 16
 MFA_MAX_RETRY_COUNT = 3
 ELEMENT_CHECK_DELAY = 0.5
 DOMAIN_CHECK_DELAY = 0.5
+COOKIE_CHECK_DELAY = 0.5
 
 LOGGER = logging.getLogger("OCMA")
 LOGGER.setLevel(logging.INFO)
@@ -111,8 +113,7 @@ def login(  # noqa: PLR0913,PLR0917 # pylint: disable=too-many-arguments,too-man
     _fill_login(driver, username, password)
     _fill_mfa(driver, mfa_secret)
     _confirm_stay_signed_in(driver)
-    _is_on_install_page(driver)
-    return _get_webvpn_cookie(driver)
+    return _get_webvpn_cookie(driver, vpn_site)
 
 
 def _fill_login(driver: webdriver.Firefox, username: str, password: str) -> None:
@@ -305,23 +306,41 @@ def _element_interactable(
     return True
 
 
-def _is_on_install_page(driver: webdriver.Firefox) -> None:
-    if not _find_element(driver, By.ID, VPN_INSTALL_PAGE_EXCLUSIVE_ELEMENT_ID):
-        raise ValueError("Could not find install page!")
+def _poll_webvpn_cookie(driver: webdriver.Firefox) -> dict[str, Any] | None:
+    for _ in range(MAX_RETRY_COOKIE_CHECK):
+        webvpn_cookie = driver.get_cookie("webvpn")
+        if webvpn_cookie is not None:
+            return webvpn_cookie
+
+        time.sleep(COOKIE_CHECK_DELAY)
+
+    return None
 
 
-def _get_webvpn_cookie(driver: webdriver.Firefox) -> VPNCookie:
-    webvpn_cookie = driver.get_cookie("webvpn")
-    driver.close()
+def _get_webvpn_cookie(driver: webdriver.Firefox, vpn_site: str) -> VPNCookie:
+    LOGGER.info("Waiting for the webvpn cookie")
+    webvpn_cookie = _poll_webvpn_cookie(driver)
 
     if webvpn_cookie is None:
+        # Which page the portal ends up on differs between sessions, and the
+        # cookie is only readable from the VPN domain it belongs to.
+        LOGGER.info("No cookie on %s, going back to %s", driver.current_url, vpn_site)
+        driver.get(vpn_site)
+        webvpn_cookie = _poll_webvpn_cookie(driver)
+
+    if webvpn_cookie is None:
+        current_url = driver.current_url
+        driver.close()
         raise ValueError(
-            "Failed to find the webvpn cookie. Maybe the authentication has failed?",
+            f"Failed to find the webvpn cookie, ended up on {current_url}. "
+            "Maybe the authentication has failed?",
         )
 
-    webvpn_domain = webvpn_cookie["domain"]
-    webvpn_value = webvpn_cookie["value"]
-    return VPNCookie(domain=webvpn_domain, cookie=webvpn_value)
+    driver.close()
+    return VPNCookie(
+        domain=webvpn_cookie["domain"],
+        cookie=webvpn_cookie["value"],
+    )
 
 
 def _check_on_ms_login_page(driver: webdriver.Firefox) -> None:
