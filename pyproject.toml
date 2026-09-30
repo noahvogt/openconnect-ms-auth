@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ocma"
-version = "0.5.0"
+version = "0.6.0"
 license = "mit"
 description = "Openconnect Microsoft Authenticator"
 authors = ["Sean Blackburn <birdicode@gmail.com>", "Noah Vogt <noah@noahvogt.com>"]
