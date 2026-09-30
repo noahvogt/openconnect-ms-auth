@@ -21,6 +21,9 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
 USERNAME_INPUT_NAME = "loginfmt"
+USERNAME_ERROR_ID = "usernameError"
+PASSWORD_ERROR_ID = "passwordError"
+APPROVAL_TITLE_ID = "idDiv_SAOTCAS_Title"
 PASSWORD_INPUT_NAME = "passwd"
 MFA_INPUT_NAME = "otc"
 CONTINUE_BUTTON_ID = "idSIButton9"
@@ -28,6 +31,9 @@ MFA_CONTINUE_BUTTON_ID = "idSubmit_SAOTCC_Continue"
 MFA_ERROR_TEXT_ID = "idSpan_SAOTCC_Error_OTC"
 MAX_RETRY_DOMAIN_CHECK = 16
 MAX_RETRY_COOKIE_CHECK = 16
+STEP_TIMEOUT = 15
+APPROVAL_CHECK_TIMEOUT = 8
+MFA_RESULT_TIMEOUT = 2
 MFA_MAX_RETRY_COUNT = 3
 ELEMENT_CHECK_DELAY = 0.5
 DOMAIN_CHECK_DELAY = 0.5
@@ -121,28 +127,41 @@ def _fill_login(driver: webdriver.Firefox, username: str, password: str) -> None
 
     _check_on_ms_login_page(driver)
 
-    if not _find_element(driver, By.NAME, USERNAME_INPUT_NAME):
-        raise ValueError("Could not find login page!")
-
     if not _element_interactable(driver, By.NAME, USERNAME_INPUT_NAME):
         raise ValueError("Could not find username field!")
     driver.find_element(By.NAME, USERNAME_INPUT_NAME).send_keys(username)
     click_continue(driver)
 
-    if _find_element(driver, by=By.ID, item="usernameError", wait=5):
-        error_msg = driver.find_element(By.ID, "usernameError").text
-        LOGGER.error("Invalid username or other error (Message: %s)", error_msg)
-        raise ValueError(f"Invalid username or other error (Message: {error_msg})")
-
-    if not _element_interactable(driver, By.NAME, PASSWORD_INPUT_NAME):
+    if not _wait_for_any(
+        driver,
+        [
+            ec.element_to_be_clickable((By.NAME, PASSWORD_INPUT_NAME)),
+            ec.presence_of_element_located((By.ID, USERNAME_ERROR_ID)),
+        ],
+        STEP_TIMEOUT,
+    ):
         raise ValueError("Could not find password input!")
+
+    _raise_on_error(driver, USERNAME_ERROR_ID, "Invalid username or other error")
+
     driver.find_element(By.NAME, PASSWORD_INPUT_NAME).send_keys(password)
     click_continue(driver)
 
-    if _find_element(driver, by=By.ID, item="passwordError", wait=5):
-        error_msg = driver.find_element(By.ID, "passwordError").text
-        LOGGER.error("Invalid password or other error (Message: %s)", error_msg)
-        raise ValueError(f"Invalid password or other error (Message: {error_msg})")
+    # After the password the page moves on to the MFA code, to the approval
+    # screen, or straight off the login pages, depending on the account.
+    if not _wait_for_any(
+        driver,
+        [
+            ec.presence_of_element_located((By.ID, PASSWORD_ERROR_ID)),
+            ec.presence_of_element_located((By.NAME, MFA_INPUT_NAME)),
+            ec.presence_of_element_located((By.ID, APPROVAL_TITLE_ID)),
+            lambda d: not _is_on_ms_login_page(d),
+        ],
+        STEP_TIMEOUT,
+    ):
+        raise ValueError("The login did not continue after the password!")
+
+    _raise_on_error(driver, PASSWORD_ERROR_ID, "Invalid password or other error")
 
     retries = MAX_RETRY_DOMAIN_CHECK
     while on_login_form(driver) and retries > 0:
@@ -219,14 +238,33 @@ def _fill_mfa(driver: webdriver.Firefox, mfa_secret: str | None) -> None:
             break
 
         # Check for any errors
-        if not _find_element(driver, By.ID, MFA_ERROR_TEXT_ID, 2):
+        _wait_for_any(
+            driver,
+            [
+                ec.presence_of_element_located((By.ID, MFA_ERROR_TEXT_ID)),
+                lambda d: not d.current_url.endswith("/login"),
+            ],
+            MFA_RESULT_TIMEOUT,
+        )
+        if not driver.find_elements(By.ID, MFA_ERROR_TEXT_ID):
             # Did not find an error
             LOGGER.info("MFA seems to have been accepted, no errors")
             break
 
 
 def _check_approval_screen(driver: webdriver.Firefox) -> None:
-    if not _find_element(driver, By.ID, "idDiv_SAOTCAS_Title"):
+    # The approval screen is optional, so race it against the code input.
+    if not _wait_for_any(
+        driver,
+        [
+            ec.presence_of_element_located((By.ID, APPROVAL_TITLE_ID)),
+            ec.presence_of_element_located((By.NAME, MFA_INPUT_NAME)),
+        ],
+        APPROVAL_CHECK_TIMEOUT,
+    ):
+        return
+
+    if not driver.find_elements(By.ID, APPROVAL_TITLE_ID):
         return
 
     found_sign_in_other_way = False
@@ -279,6 +317,33 @@ def _confirm_stay_signed_in(driver: webdriver.Firefox) -> bool:
     return True
 
 
+def _wait_for_any(
+    driver: webdriver.Firefox,
+    conditions: list[Any],
+    timeout: float,
+) -> bool:
+    # Racing the expected next step against the error message keeps a
+    # successful login from waiting out the timeout of an error that the page
+    # never shows.
+    try:
+        WebDriverWait(driver, timeout).until(ec.any_of(*conditions))
+
+    except TimeoutException:
+        return False
+
+    return True
+
+
+def _raise_on_error(driver: webdriver.Firefox, error_id: str, message: str) -> None:
+    errors = driver.find_elements(By.ID, error_id)
+    if not errors:
+        return
+
+    error_msg = errors[0].text
+    LOGGER.error("%s (Message: %s)", message, error_msg)
+    raise ValueError(f"{message} (Message: {error_msg})")
+
+
 def _find_element(driver: webdriver.Firefox, by: str, item: str, wait: int = 8) -> bool:
     try:
         w = WebDriverWait(driver, wait)
@@ -300,7 +365,7 @@ def _element_interactable(
         w = WebDriverWait(driver, wait)
         w.until(ec.element_to_be_clickable((by, item)))
 
-    except ElementNotInteractableException:
+    except (ElementNotInteractableException, TimeoutException):
         return False
 
     return True
