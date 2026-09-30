@@ -6,37 +6,63 @@ openconnect VPN client.
 It uses selenium to open the login webpage and fill in the form details. At the end, it
 fetches the correct VPN HOST and the Cisco AnyConnect `webvpn` cookie.
 
-## Installing for CLI usage
+> This is a fork of [FHNW/openconnect-ms-auth](https://git.lab.black-burn.ch/FHNW/openconnect-ms-auth)
+> by Sean Blackburn. It keeps the credentials out of the process arguments, uses
+> `pyotp` instead of the unpackaged `OTPpy`, and ships an Arch package.
 
-Simply run `pipx install --index-url https://git.snas.black-burn.ch/api/packages/FHNW/pypi/simple/ --pip-args='--extra-index-url https://pypi.org/simple/' ocma`
-to install the package globally. Then the "ocma" command should be available.
-Try it out by typing `ocma -h`.
+## Installation
 
-To upgrade the CLI wrapper after a new release, run the following command: `pipx upgrade ocma`
+```shell
+paru -S openconnect-ms-auth
+```
 
-## Password character limitations
+The PKGBUILD lives in [noahvogt/pkgbuilds](https://github.com/noahvogt/pkgbuilds),
+which is configured as a paru PKGBUILD repository by
+[norisa](https://github.com/noahvogt/norisa).
 
-There are some special characters, that might make your life difficult and are best left out of your password:
+## Providing credentials
 
-- `$`: Most often in bash, this will try and reference a variable, do not use it
-- `!`: Most often in bash, this will repeat the last command
+Secrets are never taken as command line arguments, because those are readable by
+every process on the machine. `ocma` resolves them in this order:
+
+1. `--password-command` / `--mfa-command`: a command whose stdout holds the secret
+2. `$OCMA_PASSWORD` / `$OCMA_MFA_SECRET`
+3. stdin: first line the password, second line the TOTP secret
+
+The recommended source is the Secret Service, so that the secrets stay encrypted at
+rest and are unlocked once per session:
+
+```shell
+secret-tool store --label='FHNW VPN password' service fhnw-vpn type password
+secret-tool store --label='FHNW VPN TOTP' service fhnw-vpn type totp
+```
+
+The TOTP secret is the `secret` parameter of the enrollment URL. For
+`otpauth://totp/FHNW%3Aelon.musk%40students.fhnw.ch?secret=NBSWY3DPEB3W64TMMQ&issuer=Microsoft`
+it is `NBSWY3DPEB3W64TMMQ`.
 
 ## Example CLI usage
 
-Replace `[username]` and `[password]` with your own information. If you have your account
-secured with a TOTP MFA, provide the `-m` flag with the TOTP secret as the value.
-
-Example of a TOTP url: `otpauth://totp/FHNW%3Aelon.musk%40students.fhnw.ch?secret=NBSWY3DPEB3W64TMMQ&issuer=Microsoft`
-The secret in this case would be `NBSWY3DPEB3W64TMMQ`. This needs to be provided as an input.
-
 ```shell
-eval $( ocma -u [username] -p [password] -m [mfa_secret] --print-to-stdout );
-[ -n $VPN_COOKIE ] && echo $VPN_COOKIE | sudo openconnect --cookie-on-stdin $VPN_HOST
+eval "$(ocma -u elon.musk@students.fhnw.ch \
+    --password-command 'secret-tool lookup service fhnw-vpn type password' \
+    --mfa-command 'secret-tool lookup service fhnw-vpn type totp' \
+    --print-to-stdout)"
+
+[ -n "$VPN_COOKIE" ] && echo "$VPN_COOKIE" | doas openconnect --cookie-on-stdin "$VPN_HOST"
 ```
 
-## Example usage in a Python project
+To let NetworkManager own the connection instead, so that it shows up in `nmcli`:
 
-Add with poetry (or pip, ...): `poetry add git+https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth`
+```shell
+printf 'vpn.secrets.cookie:%s\nvpn.secrets.gateway:%s\n' "$VPN_COOKIE" "$VPN_HOST" \
+    | nmcli connection up FHNW passwd-file /dev/stdin
+```
+
+Pass `--show-browser` to watch the login happen, which is the way to find out what
+broke when Microsoft changes the login pages.
+
+## Example usage in a Python project
 
 ```python
 from ocma import connect
@@ -44,6 +70,26 @@ from ocma import connect
 connect.login(
     username="username",
     password="password",
-    mfa_secret="mfa_secret"
+    mfa_secret="mfa_secret",
 )
 ```
+
+## Development
+
+```shell
+just            # list the recipes
+just lint       # ruff check and format check
+just test       # pytest
+```
+
+### Releasing
+
+1. `just release 0.5.0` runs the checks, bumps `pyproject.toml`, commits and tags.
+2. `git push --follow-tags`.
+3. In [pkgbuilds](https://github.com/noahvogt/pkgbuilds), the daily update job opens
+   a PR bumping `pkgver`, the checksums and `.SRCINFO` — or run
+   `scripts/bump openconnect-ms-auth 0.5.0` there yourself. Merge it, build the
+   package once locally, then publish it with
+   `scripts/publish-aur openconnect-ms-auth`.
+
+The AUR push happens from your machine, so that no SSH key has to be stored in CI.

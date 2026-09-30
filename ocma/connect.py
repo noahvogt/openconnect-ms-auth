@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
-from otppy import OTP
+import pyotp
 from selenium import webdriver
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -43,7 +43,7 @@ class VPNCookie:
     cookie: str
 
 
-def login(  # noqa: PLR0913 # pylint: disable=too-many-arguments,too-many-positional-arguments
+def login(  # noqa: PLR0913,PLR0917 # pylint: disable=too-many-arguments,too-many-positional-arguments
     username: str,
     password: str,
     mfa_secret: str | None = None,
@@ -376,7 +376,11 @@ def get_mfa_code(secret: str) -> str:
     -------
     str
         MFA code
+
+    Raises
+    ------
+    ValueError
+        If the secret is not valid base32.
     """
-    otp = OTP.fromb32(secret)
-    code: str = otp.TOTP()[0]
+    code: str = pyotp.TOTP(secret).now()
     return code

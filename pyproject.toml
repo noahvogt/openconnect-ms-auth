@@ -1,16 +1,16 @@
 [tool.poetry]
 name = "ocma"
-version = "0.3.2"
+version = "0.4.0"
 license = "mit"
 description = "Openconnect Microsoft Authenticator"
-authors = ["Sean Blackburn <birdicode@gmail.com>"]
+authors = ["Sean Blackburn <birdicode@gmail.com>", "Noah Vogt <noah@noahvogt.com>"]
 readme = "README.md"
 packages = [{ include = "ocma" }, { include = "ocma/py.typed" }]
 
 [tool.poetry.dependencies]
-python = "^3.9,<3.13"
+python = "^3.9"
 selenium = "^4.1.0"
-OTPpy = "^0.1.2"
+pyotp = "^2.9.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.9.0"
@@ -93,7 +93,7 @@ plugins = []
 
 [[tool.mypy.overrides]]
 ignore_missing_imports = true
-module = ["otppy.*"]
+module = ["pyotp.*"]
 
 # https://jsh9.github.io/pydoclint/config_options.html
 [tool.pydoclint]
@@ -101,3 +101,7 @@ style = 'numpy'
 exclude = '\.git|data'
 allow-init-docstring = true
 skip-checking-short-docstrings = false
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

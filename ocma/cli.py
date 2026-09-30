@@ -1,8 +1,116 @@
 """CLI interface."""
 
 import argparse
+import getpass
+import os
+import shlex
+import subprocess
+import sys
 
 from ocma import connect
+
+PASSWORD_ENV = "OCMA_PASSWORD"
+MFA_ENV = "OCMA_MFA_SECRET"
+
+
+def _read_command(command: str) -> str:
+    """
+    Read a secret from the stdout of a command.
+
+    Parameters
+    ----------
+    command : str
+        Command to run. Split according to shell syntax, but not run in a shell.
+
+    Returns
+    -------
+    str
+        First line of the command output, stripped.
+
+    Raises
+    ------
+    ValueError
+        If the command could not be run or exited non-zero.
+    """
+    try:
+        result = subprocess.run(
+            shlex.split(command),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as e:
+        raise ValueError(f"Failed to read a secret from '{command}': {e}") from e
+
+    return result.stdout.splitlines()[0].strip() if result.stdout.strip() else ""
+
+
+def _read_stdin() -> list[str]:
+    """
+    Read the credentials passed on stdin.
+
+    Returns
+    -------
+    list[str]
+        The non-empty lines found on stdin.
+    """
+    return [line.strip() for line in sys.stdin.read().splitlines() if line.strip()]
+
+
+def _resolve_credentials(args: argparse.Namespace) -> tuple[str, str | None]:
+    """
+    Resolve the password and the MFA secret from the configured sources.
+
+    The sources are tried in this order: an explicit command, the environment,
+    and finally stdin (first line: password, second line: MFA secret). Neither
+    secret is ever accepted as a command line argument, because arguments are
+    visible to every other process on the machine.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        The parsed command line arguments.
+
+    Returns
+    -------
+    tuple[str, str | None]
+        The password and, if one was configured, the MFA secret.
+
+    Raises
+    ------
+    ValueError
+        If no password could be resolved.
+    """
+    password: str | None = None
+    mfa_secret: str | None = None
+
+    if args.password_command:
+        password = _read_command(args.password_command)
+    elif os.environ.get(PASSWORD_ENV):
+        password = os.environ[PASSWORD_ENV]
+
+    if args.mfa_command:
+        mfa_secret = _read_command(args.mfa_command)
+    elif os.environ.get(MFA_ENV):
+        mfa_secret = os.environ[MFA_ENV]
+
+    if password is None:
+        if sys.stdin.isatty():
+            password = getpass.getpass(f"Password ({args.username}): ")
+        else:
+            lines = _read_stdin()
+            if lines:
+                password = lines[0]
+            if mfa_secret is None and len(lines) > 1:
+                mfa_secret = lines[1]
+
+    if not password:
+        raise ValueError(
+            "No password found. Provide it via --password-command, "
+            f"${PASSWORD_ENV} or on stdin.",
+        )
+
+    return password, mfa_secret
 
 
 def run() -> None:
@@ -12,11 +120,10 @@ def run() -> None:
     Raises
     ------
     ValueError
-        If the MFS secret is invalid
+        If the MFA secret is invalid.
     """
     parser = argparse.ArgumentParser(description="openconnect-microsoft-authenticator")
 
-    # add argument
     parser.add_argument(
         "-u",
         "--username",
@@ -26,19 +133,24 @@ def run() -> None:
         required=True,
     )
     parser.add_argument(
-        "-p",
-        "--password",
-        metavar="password",
+        "--password-command",
+        metavar="command",
         type=str,
-        help="MS Account password. If not provided, it will be read from stdin.",
+        help=(
+            "Command printing the MS Account password on stdout, e.g. "
+            "'secret-tool lookup service fhnw-vpn type password'. Falls back to "
+            f"${PASSWORD_ENV} and then to stdin."
+        ),
     )
     parser.add_argument(
-        "-m",
-        "--mfa",
-        metavar="secret",
+        "--mfa-command",
+        metavar="command",
         type=str,
-        help="TOTP secret. Required, if you have set up 2FA with your MS account (only TOTP).",
-        required=False,
+        help=(
+            "Command printing the TOTP secret on stdout. Falls back to "
+            f"${MFA_ENV} and then to the second line of stdin. Required if the "
+            "account is secured with a TOTP MFA."
+        ),
     )
 
     parser.add_argument(
@@ -50,9 +162,9 @@ def run() -> None:
         default="https://vpn.fhnw.ch",
     )
     parser.add_argument(
-        "--show-head",
-        action="store_false",
-        help="If the browser window should be shown during the authentication process.",
+        "--show-browser",
+        action="store_true",
+        help="Show the browser window during the authentication process.",
     )
     parser.add_argument(
         "-v",
@@ -65,42 +177,32 @@ def run() -> None:
         action="store_true",
         help="""If the vpn host and cookie should be printed to the stdout. To be used like:\n
             \n
-            eval $( python ocma/cli.py -u [username] -p [password] --print-to-stdout ); \n
+            eval $( ocma -u [username] --print-to-stdout ); \n
             [ -n $VPN_COOKIE ] && echo $VPN_COOKIE | sudo openconnect --cookie-on-stdin $VPN_HOST
         """,
     )
 
-    # parse the arguments from standard input
     args = parser.parse_args()
 
-    username: str = args.username
-    password: str | None = args.password
-    mfa_secret: str = args.mfa
-    vpn_url: str = args.vpn_url
-    headless: bool = args.show_head
-    print_to_stdout: bool = args.print_to_stdout
-    log_messages: bool = args.v
-
-    if password is None:
-        password = input()
+    password, mfa_secret = _resolve_credentials(args)
 
     if mfa_secret is not None:
         try:
             connect.get_mfa_code(mfa_secret)
 
         except ValueError as e:
-            raise ValueError(f"Your MFA secret '{mfa_secret}' is invalid!") from e
+            raise ValueError("Your MFA secret is invalid!") from e
 
     cookie = connect.login(
-        username=username,
+        username=args.username,
         password=password,
         mfa_secret=mfa_secret,
-        vpn_site=vpn_url,
-        headless=headless,
-        log_messages=log_messages,
+        vpn_site=args.vpn_url,
+        headless=not args.show_browser,
+        log_messages=args.v,
     )
 
-    if print_to_stdout:
+    if args.print_to_stdout:
         print(f"VPN_HOST={cookie.domain}")
         print(f"VPN_COOKIE={cookie.cookie}")
 
