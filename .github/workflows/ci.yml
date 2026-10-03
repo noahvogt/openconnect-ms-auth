@@ -2,18 +2,21 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.14"]
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-      - run: pip install pyotp selenium pytest ruff
-      - run: ruff check ocma tests
-      - run: ruff format --check ocma tests
-      - run: PYTHONPATH="$PWD" pytest -q
+      - uses: astral-sh/setup-uv@v10
+      - run: uv sync --locked
+      - run: uv run ruff check ocma tests
+      - run: uv run ruff format --check ocma tests
+      - run: uv run pytest -q

@@ -1,6 +1,6 @@
-exclude: ^(data/.*|.vscode/.*|poetry.lock)$
+exclude: ^(data/.*|.vscode/.*|uv.lock)$
 default_language_version:
-  python: python3.11
+  python: python3
 
 repos:
   - repo: https://github.com/commitizen-tools/commitizen
@@ -73,17 +73,9 @@ repos:
 
   - repo: local
     hooks:
-      - id: poetry-install
-        name: Install project deps
-        entry: poetry install
-        language: system
-        always_run: false
-        types: [python]
-        pass_filenames: false
-        stages: [commit, merge-commit, push, manual]
       - id: mypy
         name: Run mypy
-        entry: poetry run mypy ocma
+        entry: uv run mypy ocma
         language: system
         always_run: false
         types: [python]
@@ -91,7 +83,7 @@ repos:
         stages: [commit, merge-commit, push, manual]
       - id: pylint
         name: Run pylint
-        entry: poetry run pylint -j 0 ocma
+        entry: uv run pylint -j 0 ocma
         language: system
         always_run: false
         types: [python]
@@ -99,7 +91,7 @@ repos:
         stages: [commit, merge-commit, push, manual]
       - id: run-tests
         name: Run tests
-        entry: poetry run pytest
+        entry: uv run pytest
         language: system
         always_run: false
         types: [python]

@@ -1,28 +1,35 @@
-[tool.poetry]
+[project]
 name = "ocma"
 version = "0.6.0"
-license = "mit"
 description = "Openconnect Microsoft Authenticator"
-authors = ["Sean Blackburn <birdicode@gmail.com>", "Noah Vogt <noah@noahvogt.com>"]
 readme = "README.md"
-packages = [{ include = "ocma" }, { include = "ocma/py.typed" }]
+license = "MIT"
+license-files = ["LICENCE"]
+authors = [
+  { name = "Sean Blackburn", email = "birdicode@gmail.com" },
+  { name = "Noah Vogt", email = "noah@noahvogt.com" },
+]
+requires-python = ">=3.11"
+dependencies = ["selenium>=4.1.0", "pyotp>=2.9.0"]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-selenium = "^4.1.0"
-pyotp = "^2.9.0"
+[project.scripts]
+ocma = "ocma.cli:run"
 
-[tool.poetry.group.dev.dependencies]
-mypy = "^1.9.0"
-pylint = "^3.1.0"
-pycln = "^2.4.0"
-pyupgrade = "^3.15.2"
-pre-commit = "^4.0.1"
-ruff = "^0.7.1"
-pytest = "^8.1.1"
+[dependency-groups]
+dev = [
+  "mypy>=1.9.0",
+  "pylint>=3.1.0",
+  "pre-commit>=4.0.1",
+  "ruff>=0.7.1",
+  "pytest>=8.1.1",
+]
 
-[tool.poetry.scripts]
-ocma = 'ocma.cli:run'
+[build-system]
+requires = ["uv_build>=0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
 
 [tool.isort]
 profile = "black"
@@ -101,7 +108,3 @@ style = 'numpy'
 exclude = '\.git|data'
 allow-init-docstring = true
 skip-checking-short-docstrings = false
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"

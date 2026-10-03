@@ -92,7 +92,10 @@ connect.login(
 
 ## Development
 
+The project is managed with [uv](https://docs.astral.sh/uv/).
+
 ```shell
+uv sync         # set up .venv with the dev dependencies
 just            # list the recipes
 just lint       # ruff check and format check
 just test       # pytest
@@ -100,7 +103,8 @@ just test       # pytest
 
 ### Releasing
 
-1. `just release 0.5.0` runs the checks, bumps `pyproject.toml`, commits and tags.
+1. `just release 0.5.0` runs the checks, bumps the version in `pyproject.toml` and
+   `uv.lock`, commits and tags.
 2. `git push --follow-tags`.
 3. In [pkgbuilds](https://github.com/noahvogt/pkgbuilds), the daily update job opens
    a PR bumping `pkgver`, the checksums and `.SRCINFO` — or run

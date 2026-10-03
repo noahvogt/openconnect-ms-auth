@@ -1,12 +1,16 @@
-FROM python:3.12-slim as Runner
+FROM python:3.14-slim AS runner
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+COPY --from=ghcr.io/astral-sh/uv:0.12.21 /uv /usr/local/bin/uv
+
 # Env
 ENV IS_DOCKER=true
-ENV PYTHONPATH=/
 ENV GECKO_DRIVER_VERSION='v0.34.0'
-ENV PATH="/root/.local/bin:$PATH"
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV UV_PYTHON_DOWNLOADS=never
+ENV PATH="/app/.venv/bin:$PATH"
 
 # install VPN utils
 # hadolint ignore=DL3008
@@ -20,15 +24,16 @@ RUN curl -OL https://github.com/mozilla/geckodriver/releases/download/$GECKO_DRI
   && tar -xvzf geckodriver-$GECKO_DRIVER_VERSION-linux64.tar.gz \
   && rm geckodriver-$GECKO_DRIVER_VERSION-linux64.tar.gz \
   && chmod +x geckodriver \
-  && cp geckodriver /usr/local/bin/ \
-  && curl -sSL https://install.python-poetry.org | python3 -
+  && cp geckodriver /usr/local/bin/
 
-# Install the env
-WORKDIR /
-COPY poetry.lock .
-COPY pyproject.toml .
-RUN poetry install --no-interaction --no-ansi --without dev --no-root
+# Install the dependencies first, so that they are cached across code changes
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-dev --no-install-project
 
-# Copy the files
-COPY ocma /ocma
-WORKDIR /ocma
+# Install the project itself
+COPY README.md LICENCE ./
+COPY ocma ./ocma
+RUN uv sync --locked --no-dev --no-editable
+
+ENTRYPOINT ["ocma"]

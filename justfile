@@ -10,12 +10,12 @@ default:
 
 # Run the test suite
 test:
-    PYTHONPATH="{{justfile_directory()}}" pytest -q
+    uv run pytest -q
 
 # Check lint and formatting
 lint:
-    ruff check ocma tests
-    ruff format --check ocma tests
+    uv run ruff check ocma tests
+    uv run ruff format --check ocma tests
 
 # Bump the version, commit and tag it. Push with: git push --follow-tags
 release new_version: lint test
@@ -25,8 +25,8 @@ release new_version: lint test
         echo "working tree is dirty" >&2
         exit 1
     fi
-    sed -i 's/^version = ".*"/version = "{{new_version}}"/' pyproject.toml
-    git add pyproject.toml
+    uv version "{{new_version}}"
+    git add pyproject.toml uv.lock
     git commit -m "chore(release): {{new_version}}"
     git tag -a "v{{new_version}}" -m "v{{new_version}}"
     echo "Tagged v{{new_version}}. Next: git push --follow-tags, let the package"
