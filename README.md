@@ -103,12 +103,17 @@ just test       # pytest
 
 ### Releasing
 
-1. `just release 0.5.0` runs the checks, bumps the version in `pyproject.toml` and
-   `uv.lock`, commits and tags.
-2. `git push --follow-tags`.
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/),
+which is what the version bump is derived from.
+
+1. `just release` runs the checks, then lets [commitizen](https://commitizen-tools.github.io/commitizen/)
+   pick the next version from the commits since the last tag, bump `pyproject.toml`
+   and `uv.lock`, update `CHANGELOG.md`, commit and tag. Pass `--increment PATCH`
+   or a version to override it, e.g. when only `build:` or `chore:` commits landed.
+2. `git push --follow-tags`. The release workflow then creates the GitHub release.
 3. In [pkgbuilds](https://github.com/noahvogt/pkgbuilds), the daily update job opens
    a PR bumping `pkgver`, the checksums and `.SRCINFO` — or run
-   `scripts/bump openconnect-ms-auth 0.5.0` there yourself. Merge it, build the
+   `scripts/bump openconnect-ms-auth <version>` there yourself. Merge it, build the
    package once locally, then publish it with
    `scripts/publish-aur openconnect-ms-auth`.
 

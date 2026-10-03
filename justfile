@@ -17,17 +17,20 @@ lint:
     uv run ruff check ocma tests
     uv run ruff format --check ocma tests
 
-# Bump the version, commit and tag it. Push with: git push --follow-tags
-release new_version: lint test
+# Bump the version from the commits since the last tag, update the changelog,
+# commit and tag it. Extra arguments go to `cz bump`, e.g. `--increment PATCH`
+# or an explicit version. Push with: git push --follow-tags
+release *args: lint test
     #!/usr/bin/env bash
     set -euo pipefail
     if [ -n "$(git status --porcelain)" ]; then
         echo "working tree is dirty" >&2
         exit 1
     fi
-    uv version "{{new_version}}"
-    git add pyproject.toml uv.lock
-    git commit -m "chore(release): {{new_version}}"
-    git tag -a "v{{new_version}}" -m "v{{new_version}}"
-    echo "Tagged v{{new_version}}. Next: git push --follow-tags, let the package"
+    # Hook environments installed from inside the commit can clobber its index
+    # (npm's git clone of cspell inherits GIT_INDEX_FILE), so install them first.
+    uv run pre-commit install-hooks
+    uv run cz bump --yes {{args}}
+    version="$(uv run cz version --project)"
+    echo "Tagged v$version. Next: git push --follow-tags, let the release"
     echo "workflow pass, then bump and publish it from the pkgbuilds repo."

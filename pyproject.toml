@@ -17,6 +17,7 @@ ocma = "ocma.cli:run"
 
 [dependency-groups]
 dev = [
+  "commitizen>=4.19.1",
   "mypy>=1.9.0",
   "pylint>=3.1.0",
   "pre-commit>=4.0.1",
@@ -30,6 +31,15 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-root = ""
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "uv"
+tag_format = "v$version"
+legacy_tag_formats = ["$version"]
+annotated_tag = true
+update_changelog_on_bump = true
+bump_message = "chore(release): $new_version"
 
 [tool.isort]
 profile = "black"
