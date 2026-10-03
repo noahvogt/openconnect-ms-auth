@@ -2,7 +2,7 @@ FROM python:3.14.8-slim AS runner
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-COPY --from=ghcr.io/astral-sh/uv:0.12.21 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.22 /uv /usr/local/bin/uv
 
 # Env
 ENV IS_DOCKER=true
