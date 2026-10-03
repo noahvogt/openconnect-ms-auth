@@ -12,10 +12,9 @@ default:
 test:
     uv run pytest -q
 
-# Check lint and formatting
+# Run the pre-commit hooks on all files, like CI does
 lint:
-    uv run ruff check ocma tests
-    uv run ruff format --check ocma tests
+    SKIP=run-tests uv run pre-commit run --all-files
 
 # Bump the version from the commits since the last tag, update the changelog,
 # commit and tag it. Extra arguments go to `cz bump`, e.g. `--increment PATCH`

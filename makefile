@@ -6,4 +6,4 @@ update-template:
 	copier update --trust
 
 cspell-filenames:
-	git ls-files | cspell stdin --show-context --locale en-GB,de-CH
+	git ls-files | cspell stdin --show-context

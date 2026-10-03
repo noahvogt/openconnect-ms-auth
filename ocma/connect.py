@@ -75,15 +75,15 @@ def login(  # noqa: PLR0913,PLR0917 # pylint: disable=too-many-arguments,too-man
         Microsoft account username.
     password : str
         Microsoft account password.
-    mfa_secret : str | None, optional
+    mfa_secret : str | None
         Multi-factor secret, by default None
-    vpn_site : str, optional
+    vpn_site : str
         VPN site to log into, by default "https://vpn.fhnw.ch"
-    headless : bool, optional
+    headless : bool
         If the browser should be run in headless mode, by default True
-    log_messages : bool, optional
+    log_messages : bool
         If messages should be logged to the console, by default False
-    session : str | None, optional
+    session : str | None
         Session cookies of an earlier login, as stored by a previous run, by
         default None. A session that is still valid skips the login entirely.
 
@@ -508,7 +508,7 @@ def click_continue(driver: webdriver.Firefox, btn_id: str = CONTINUE_BUTTON_ID) 
     ----------
     driver : webdriver.Firefox
         The driver for which to click the continue button.
-    btn_id : str, optional
+    btn_id : str
         The buttons ID to be clicked, by default CONTINUE_BUTTON_ID
 
     Returns
@@ -537,17 +537,12 @@ def get_mfa_code(secret: str) -> str:
     Parameters
     ----------
     secret : str
-        MFA secret
+        MFA secret, base32 encoded. pyotp raises a ValueError for an invalid one.
 
     Returns
     -------
     str
         MFA code
-
-    Raises
-    ------
-    ValueError
-        If the secret is not valid base32.
     """
     code: str = pyotp.TOTP(secret).now()
     return code

@@ -97,7 +97,7 @@ The project is managed with [uv](https://docs.astral.sh/uv/).
 ```shell
 uv sync         # set up .venv with the dev dependencies
 just            # list the recipes
-just lint       # ruff check and format check
+just lint       # pre-commit hooks on all files
 just test       # pytest
 ```
 

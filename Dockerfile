@@ -1,4 +1,4 @@
-FROM python:3.14-slim AS runner
+FROM python:3.14.8-slim AS runner
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -6,6 +6,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.12.21 /uv /usr/local/bin/uv
 
 # Env
 ENV IS_DOCKER=true
+# renovate: datasource=github-releases depName=mozilla/geckodriver
 ENV GECKO_DRIVER_VERSION='v0.34.0'
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
@@ -13,7 +14,6 @@ ENV UV_PYTHON_DOWNLOADS=never
 ENV PATH="/app/.venv/bin:$PATH"
 
 # install VPN utils
-# hadolint ignore=DL3008
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openvpn openconnect curl cifs-utils zip firefox-esr \
   && apt-get clean \

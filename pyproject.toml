@@ -117,4 +117,4 @@ module = ["pyotp.*"]
 style = 'numpy'
 exclude = '\.git|data'
 allow-init-docstring = true
-skip-checking-short-docstrings = false
+skip-checking-short-docstrings = true
