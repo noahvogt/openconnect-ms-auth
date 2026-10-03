@@ -8,6 +8,11 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 default:
     @just --list
 
+# Set up the environment and install the git hooks
+setup:
+    uv sync
+    uv run pre-commit install --hook-type pre-commit --hook-type commit-msg
+
 # Run the test suite
 test:
     uv run pytest -q
@@ -16,9 +21,9 @@ test:
 lint:
     SKIP=run-tests uv run pre-commit run --all-files
 
-# Bump the version from the commits since the last tag, update the changelog,
-# commit and tag it. Extra arguments go to `cz bump`, e.g. `--increment PATCH`
-# or an explicit version. Push with: git push --follow-tags
+# Extra arguments go to `cz bump`, e.g. `--increment PATCH` or an explicit
+# version. Push the result with: git push --follow-tags
+# Bump the version from the commits since the last tag, update the changelog, commit and tag
 release *args: lint test
     #!/usr/bin/env bash
     set -euo pipefail

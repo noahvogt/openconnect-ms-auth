@@ -95,7 +95,7 @@ connect.login(
 The project is managed with [uv](https://docs.astral.sh/uv/).
 
 ```shell
-uv sync         # set up .venv with the dev dependencies
+just setup      # set up .venv and install the git hooks
 just            # list the recipes
 just lint       # pre-commit hooks on all files
 just test       # pytest
