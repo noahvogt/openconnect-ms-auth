@@ -10,14 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.14"]
+        include:
+          # the oldest supported python with the oldest allowed versions of
+          # the direct dependencies, to check the lower bounds in pyproject.toml
+          - python-version: "3.11"
+            sync-args: --resolution lowest-direct
+          - python-version: "3.14"
+            sync-args: --locked
     env:
       UV_PYTHON: ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4.4.0
       - uses: astral-sh/setup-uv@v10.2.0
-      - run: uv sync --locked
-      - run: uv run pytest -q
+      - run: uv sync ${{ matrix.sync-args }}
+      - run: uv run --no-sync pytest -q
 
   pre-commit:
     runs-on: ubuntu-latest
