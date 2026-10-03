@@ -7,7 +7,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.12.21 /uv /usr/local/bin/uv
 # Env
 ENV IS_DOCKER=true
 # renovate: datasource=github-releases depName=mozilla/geckodriver
-ENV GECKO_DRIVER_VERSION='v0.34.0'
+ENV GECKO_DRIVER_VERSION='v0.37.1'
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_DOWNLOADS=never
