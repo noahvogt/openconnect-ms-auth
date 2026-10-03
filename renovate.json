@@ -19,6 +19,11 @@
   ],
   "packageRules": [
     {
+      "description": "Update python dependencies in uv.lock only, leaving the >= ranges in pyproject.toml as they are",
+      "matchManagers": ["pep621"],
+      "rangeStrategy": "update-lockfile"
+    },
+    {
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^v?0\\./",
       "automerge": true
