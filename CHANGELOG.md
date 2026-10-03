@@ -1,3 +1,29 @@
+## v1.0.0 (2026-10-03)
+
+## v0.6.0 (2026-09-30)
+
+### Feat
+
+- skip the login by reusing an earlier session
+
+## v0.5.0 (2026-09-30)
+
+### Feat
+
+- massively improve performance by racing the expected elements against the error ones
+
+## v0.4.2 (2026-09-30)
+
+### Fix
+
+- wait for the webvpn cookie instead of the install page The portal only shows the Cisco provisioning page on some logins, so requiring it made every other login fail even though the cookie was already set. Poll for the cookie instead, and return to the VPN domain once if it is not readable from wherever the login ended up.
+
+## v0.4.1 (2026-09-30)
+
+### Feat
+
+- resolve credentials outside of the command line
+
 ## [0.3.2](https://git.snas.black-burn.ch/FHNW/openconnect-ms-auth/compare/0.3.1...0.3.2) (2024-10-29)
 
 ### Bug Fixes
