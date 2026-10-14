@@ -70,7 +70,7 @@ repos:
         stages: [pre-commit, pre-merge-commit, pre-push, manual]
       - id: pylint
         name: Run pylint
-        entry: uv run pylint -j 0 ocma
+        entry: uv run pylint ocma
         language: system
         always_run: false
         types: [python]
