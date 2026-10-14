@@ -6,8 +6,10 @@
     "enabled": true
   },
   "lockFileMaintenance": {
-    "enabled": true
+    "enabled": true,
+    "automerge": true
   },
+  "minimumReleaseAge": "3 days",
   "customManagers": [
     {
       "customType": "regex",
@@ -25,9 +27,14 @@
       "rangeStrategy": "update-lockfile"
     },
     {
-      "matchUpdateTypes": ["minor", "patch"],
-      "matchCurrentVersion": "!/^v?0\\./",
+      "description": "Nothing updated here ships in the AUR package (the PKGBUILD builds the tag against Arch's python packages), so CI decides",
+      "matchPackageNames": ["*"],
       "automerge": true
+    },
+    {
+      "description": "uv_build is a makedepends of the AUR package",
+      "matchDepTypes": ["build-system.requires"],
+      "automerge": false
     }
   ],
   "reviewers": ["noahvogt"]
