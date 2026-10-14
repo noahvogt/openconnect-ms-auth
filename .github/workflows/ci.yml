@@ -15,7 +15,7 @@ jobs:
           # the direct dependencies, to check the lower bounds in pyproject.toml
           - python-version: "3.11"
             sync-args: --resolution lowest-direct
-          - python-version: "3.14"
+          - python-version: "3.15"
             sync-args: --locked
     env:
       UV_PYTHON: ${{ matrix.python-version }}
