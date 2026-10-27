@@ -1,4 +1,4 @@
-FROM python:3.15.0-slim AS runner
+FROM python:3.15.1-slim AS runner
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
