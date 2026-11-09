@@ -25,7 +25,7 @@ jobs:
       - run: uv sync ${{ matrix.sync-args }}
       - run: uv run --no-sync pytest -q
 
-  pre-commit:
+  prek:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
@@ -33,9 +33,7 @@ jobs:
       - run: uv sync --locked
       - uses: actions/cache@v6.1.0
         with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          path: ~/.cache/prek
+          key: prek-${{ hashFiles('.pre-commit-config.yaml') }}
       # the test job already runs pytest
-      - run: uv run pre-commit run --all-files --show-diff-on-failure
-        env:
-          SKIP: run-tests
+      - run: uv run prek run --all-files --show-diff-on-failure --skip run-tests

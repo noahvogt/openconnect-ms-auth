@@ -46,6 +46,7 @@
     "pipefail",
     "pkgbuilds",
     "pkgver",
+    "prek",
     "pylint",
     "pylintrc",
     "pyotp",

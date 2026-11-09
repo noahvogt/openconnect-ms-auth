@@ -11,15 +11,15 @@ default:
 # Set up the environment and install the git hooks
 setup:
     uv sync
-    uv run pre-commit install --hook-type pre-commit --hook-type commit-msg
+    uv run prek install
 
 # Run the test suite
 test:
     uv run pytest -q
 
-# Run the pre-commit hooks on all files, like CI does
+# Run the prek hooks on all files, like CI does
 lint:
-    SKIP=run-tests uv run pre-commit run --all-files
+    uv run prek run --all-files --skip run-tests
 
 # Extra arguments go to `cz bump`, e.g. `--increment PATCH` or an explicit
 # version. Push the result with: git push --follow-tags
@@ -33,7 +33,7 @@ release *args: lint test
     fi
     # Hook environments installed from inside the commit can clobber its index
     # (npm's git clone of cspell inherits GIT_INDEX_FILE), so install them first.
-    uv run pre-commit install-hooks
+    uv run prek prepare-hooks
     uv run cz bump --yes {{args}}
     version="$(uv run cz version --project)"
     echo "Tagged v$version. Next: git push --follow-tags, let the release"
