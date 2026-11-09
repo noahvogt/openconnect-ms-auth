@@ -29,6 +29,12 @@ dev = [
 requires = ["uv_build>=0.12"]
 build-backend = "uv_build"
 
+[tool.uv]
+# Only resolve to releases that are at least 3 days old. This replaces
+# Renovate's minimumReleaseAge for lock file maintenance, which has no release
+# timestamp and would otherwise stay pending forever.
+exclude-newer = "3 days"
+
 [tool.uv.build-backend]
 module-root = ""
 
