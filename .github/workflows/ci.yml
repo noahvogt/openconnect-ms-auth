@@ -37,3 +37,13 @@ jobs:
           key: prek-${{ hashFiles('.pre-commit-config.yaml') }}
       # the test job already runs pytest
       - run: uv run prek run --all-files --show-diff-on-failure --skip run-tests
+
+  # single required status check for the master ruleset, so that renaming
+  # jobs or changing the test matrix doesn't require touching the ruleset
+  ci-ok:
+    needs: [test, prek]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1
