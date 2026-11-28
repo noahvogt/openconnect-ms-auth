@@ -530,6 +530,18 @@ def click_continue(driver: webdriver.Firefox, btn_id: str = CONTINUE_BUTTON_ID) 
     return False
 
 
+class _TOTP(pyotp.TOTP):
+    """
+    TOTP that accepts the 80-bit secrets Microsoft issues.
+
+    pyotp 2.12 rejects secrets under 112 bits, but Microsoft authenticator
+    secrets are 16 base32 characters (80 bits). Older pyotp versions ignore
+    this attribute.
+    """
+
+    min_secret_length_bits = 80
+
+
 def get_mfa_code(secret: str) -> str:
     """
     Get the multi-factor authentication code for the given secret.
@@ -544,5 +556,5 @@ def get_mfa_code(secret: str) -> str:
     str
         MFA code
     """
-    code: str = pyotp.TOTP(secret).now()
+    code: str = _TOTP(secret).now()
     return code
