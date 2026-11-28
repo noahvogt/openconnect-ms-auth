@@ -1,3 +1,9 @@
+## v1.0.2 (2026-11-28)
+
+### Fix
+
+- **mfa**: enforce 80-bit minimum secret length with older pyotp
+
 ## v1.0.1 (2026-11-28)
 
 ### Fix

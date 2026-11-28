@@ -1,6 +1,6 @@
 [project]
 name = "ocma"
-version = "1.0.1"
+version = "1.0.2"
 description = "Openconnect Microsoft Authenticator"
 readme = "README.md"
 license = "MIT"
