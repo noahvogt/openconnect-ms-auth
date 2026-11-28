@@ -4,7 +4,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import urlparse
 
 import pyotp
@@ -535,11 +535,34 @@ class _TOTP(pyotp.TOTP):
     TOTP that accepts the 80-bit secrets Microsoft issues.
 
     pyotp 2.12 rejects secrets under 112 bits, but Microsoft authenticator
-    secrets are 16 base32 characters (80 bits). Older pyotp versions ignore
-    this attribute.
+    secrets are 16 base32 characters (80 bits). Older pyotp versions do not
+    check the length at all, so it is enforced here as well.
+
+    Parameters
+    ----------
+    s : str
+        MFA secret, base32 encoded.
+
+    Attributes
+    ----------
+    min_secret_length_bits : ClassVar[int]
+        Minimum length of the decoded secret in bits.
+
+    Raises
+    ------
+    ValueError
+        If the decoded secret is shorter than 80 bits.
     """
 
-    min_secret_length_bits = 80
+    min_secret_length_bits: ClassVar[int] = 80
+
+    def __init__(self, s: str) -> None:
+        super().__init__(s)
+        if len(self.byte_secret()) * 8 < self.min_secret_length_bits:
+            raise ValueError(
+                f"Secrets must be at least {self.min_secret_length_bits} bits "
+                "after decoding",
+            )
 
 
 def get_mfa_code(secret: str) -> str:
