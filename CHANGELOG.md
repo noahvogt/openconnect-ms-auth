@@ -1,3 +1,10 @@
+## v1.0.1 (2026-11-28)
+
+### Fix
+
+- **mfa**: accept 80-bit Microsoft TOTP secrets with pyotp >= 2.12
+- **renovate**: let lock file maintenance automerge again
+
 ## v1.0.0 (2026-10-03)
 
 ## v0.6.0 (2026-09-30)
